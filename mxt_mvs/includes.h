@@ -1,0 +1,33 @@
+/*-------------------- Include aller notwendigen Libraries-------------------*/
+
+
+#ifndef INCLUDES_H
+#define INCLUDES_H
+
+// Globale Headers
+#include <iostream>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <resolv.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/select.h>
+#include <string.h>
+#include <math.h>
+#include <pthread.h>
+#include <sched.h>
+#include <errno.h>
+#include <time.h>
+#include <assert.h>
+#include <sys/mman.h>
+#include <limits.h>
+#include <chrono>
+#include <vector>
+
+// Eigene Headers
+#include "strdef.h"
+#include "mxt.h"
+#include "rt.h"
+
+#endif // INCLUDES_H
