@@ -36,11 +36,11 @@
 #define STATUS_ERROR2       "Qer"
 
 // Function declarations
-int open_connection(std::string host, unsigned char port);  // Returns a TCP/IP-socket handle if successful
-int send_command(int sock, std::string cmd);                // Sends an R3-command via a given socket
-int receive_response(int sock, std::string &response);      // Receives an R3-respinse via a given socket
+int open_connection(const std::string& host, unsigned char port);   // Returns a TCP/IP-socket handle if successful
+int send_command(int sock, std::string cmd);                        // Sends an R3-command via a given socket
+int receive_response(int sock, std::string &response);              // Receives an R3-respinse via a given socket
 
-int open_connection(std::string host, unsigned char port){
+int open_connection(const std::string& host, unsigned char port){
     int sock;
     int ret;
     struct sockaddr_in transmit_add;

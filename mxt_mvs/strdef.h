@@ -161,7 +161,7 @@ typedef struct enet_rtcmd_str {
 #endif
 } MXTCMD;
 
-extern MXTCMD MXTsend;
-extern MXTCMD MXTrecv;
+extern MXTCMD mxt_send;
+extern MXTCMD mxt_recv;
 
 #endif // STRDEF_H
