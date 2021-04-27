@@ -19,6 +19,7 @@
 
 #include "strdef.h"
 #include "mxt.h"
+#include "r3_protocol.h"
 
 // Globale Variablen / Variablen für die UDP Verbindung zum Roboter
 
@@ -209,7 +210,23 @@ void *mvs_thread(void *data) {
 }
 
 int main() {
+    int tcp_sock;
+    int ret;
+
     std::cout << "Program start" << std::endl;
+
+    // Establish TCP/IP connection with robot for R3 commands
+    tcp_sock = open_connection("127.0.0.1", 10001);
+    if(tcp_sock == -1){
+        return -1;
+    }
+
+    // Execute the start-up routine
+    ret = start_robot(tcp_sock);
+    if(ret == -1){
+        std::cout << "Failed to start the robot." << std::endl;
+        return -1;
+    }
 
     // STRG+C abfangen
     signal(SIGINT, endprg);
@@ -228,7 +245,6 @@ int main() {
     struct sched_param param{};
     pthread_attr_t attr;
     pthread_t t1;
-    int ret;
 
     /* Lock memory */
     //if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1) {
