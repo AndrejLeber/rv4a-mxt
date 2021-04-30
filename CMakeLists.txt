@@ -10,4 +10,4 @@ include_directories(mxt_mvs)
 add_executable(rv4a_mxt
         mxt_mvs/main.cpp
         mxt_mvs/r3_protocol.h
-        mxt_mvs/strdef.h mxt_mvs/mxt.h mxt_mvs/mxt.cpp mxt_mvs/r3_protocol.cpp)
+        mxt_mvs/strdef.h mxt_mvs/mxt.h mxt_mvs/mxt.cpp mxt_mvs/r3_protocol.cpp mxt_mvs/Bahnplanung.cpp mxt_mvs/Bahnplanung.h)
