@@ -1,5 +1,6 @@
 #ifndef STRDEF_H
 #define STRDEF_H
+#include <vector>
 
 //************************************************************************************
 //**********
@@ -52,6 +53,21 @@ typedef struct{
     unsigned int sflg1; // Stellungsmerker 1
     unsigned int sflg2; // Stellungsmerker 2
 } POSE;
+
+/*************************************************************************************
+****/
+/*Stuetzstellen für Bahninterpolation in absoluten Werten
+/* Von J.A. eingefügt
+/*************************************************************************************
+****/
+
+typedef struct{
+    std::vector<float> x;
+    std::vector<float> y;
+    std::vector<float> z;
+} STEPS;
+
+
 /*************************************************************************************
 ****/
 /* Impulskoordinatensystem (nicht verwendete Achsen auf 0 setzen)*/

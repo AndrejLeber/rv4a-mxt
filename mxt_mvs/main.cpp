@@ -21,6 +21,9 @@
 #include "mxt.h"
 #include "r3_protocol.h"
 
+#include "Bahnplanung.h"
+
+
 // Globale Variablen / Variablen für die UDP Verbindung zum Roboter
 
 static long slen, rlen;
@@ -212,6 +215,27 @@ void *mvs_thread(void *data) {
 int main() {
     int tcp_sock;
     int ret;
+
+
+    //Johannes Zeugs Anfang
+    POSE start;
+    start.w.x = 1;
+    start.w.y = 0;
+    start.w.z = 5;
+
+    POSE target;
+    target.w.x = -1;
+    target.w.y = 0;
+    target.w.z = -5;
+
+    float vbahn=25;
+
+    STEPS stuetz; //diese Struktur wird über die FUnktion Sinoide ausgefüllt
+
+    stuetz=Sinoide(start, target,vbahn);
+
+    //Johannes Zeugs Ende
+
 
     std::cout << "Program start" << std::endl;
 
