@@ -232,8 +232,13 @@ int main() {
 
     STEPS stuetz; //diese Struktur wird über die FUnktion Sinoide ausgefüllt
 
+    auto t0 = std::chrono::steady_clock::now();
     stuetz=Sinoide(start, target,vbahn);
-
+    auto end = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - t0);
+    std::cout << "Laufzeit Bahnplaner [ms]: " << elapsed.count() << std::endl;
+    std::cout << stuetz.x[0];
+    return 0;
     //Johannes Zeugs Ende
 
 

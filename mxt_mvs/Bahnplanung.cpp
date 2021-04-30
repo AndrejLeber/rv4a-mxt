@@ -12,9 +12,6 @@
 
 using namespace std;
 
-
-
-
 //Funktion die das Vorzeichen eines Wertes/Vektors zurück gibt -1/0/+1
 template <typename T>
 int sign (const T &val) { return (val > 0) - (val < 0); }
@@ -26,8 +23,6 @@ std::vector<int> sign (const std::vector<T> &v) {
     return r;
 }
 
-
-
 STEPS Sinoide(POSE start, POSE target, float speed){
     STEPS Stuetz; //Struktur mit Stützstellen in X,y,z
     int n_Axis=3;
@@ -37,7 +32,7 @@ STEPS Sinoide(POSE start, POSE target, float speed){
     vector<float>tb(3); //Zeit für Bremsen oder Beschleunigen
     vector<float>tv(3); //Zeit während konstanter Geschwindigkeit
     vector<float>te(3); //Zeit für gesamte Bahn
-    float tipo=0.01; //Echtzeit Takt. Grundlegend für Stützstellen
+    float tipo=7.1e-3; //Echtzeit Takt. Grundlegend für Stützstellen
     vector<int> dir;     //Integer der die Richtung für Sützstellen vorgibt -1/0/+1
     vector<float> time_steps; //Vektor in dem t abgespeichert ist
 
@@ -64,10 +59,10 @@ STEPS Sinoide(POSE start, POSE target, float speed){
     vm[1]=speed*r_y;
     vm[2]=speed*r_z;
 
-
     //Bestimmung tb,tv,te, vm, bm
     for (int i=0;i<n_Axis;i++)
     {
+        // vm[i] = min(vm[i], sqrt((se[i]*bm[i]/2)));
         if (vm[i]>sqrt((se[i]*bm[i]/2))) //%Prüfung ob vm höher ist als vm,max
         {
             vm[i]=sqrt((se[i]*bm[i]/2)); //%vm auf vm,max setzen
@@ -83,95 +78,46 @@ STEPS Sinoide(POSE start, POSE target, float speed){
     float tv_m = *max_element(tv.begin(), tv.end());
     float tb_m = *max_element(tb.begin(), tb.end());
 
-
     for (int i=0;i<n_Axis;i++)
     {
-        if (te[i]!=te_m)
-        {
-            te[i]=te_m;
-            tv[i]=tv_m;
-            tb[i]=tb_m;
-            vm[i]=se[i]/(te[i]-tb[i]);
-            bm[i]=2*vm[i]/tb[i];
-        }
+        vm[i]=se[i]/(te_m-tb_m);
+        bm[i]=2*vm[i]/tb_m;
     }
 
     int a=te_m/tipo; //Berechnen der notwendig Anzahl an Stützstellen
 
-
     for (int i=0; i<a;i++) //t-Vektor füllen mit Zeiten... 0, 0.1, 0.2 ,....
     {
-     time_steps.push_back(i*tipo);
+        time_steps.push_back(i*tipo);
     }
 
+    // Alle Achsen ******************************************
 
-    //X-Achse ******************************************
-    int j=0;
-
-         for (int i=0; i<time_steps.size() ;i++) //Iteration über alle Stützstellen
+     for (float time_step : time_steps) //Iteration über alle Stützstellen
+     {
+         float temp;
+         if (time_step<tb_m) //Beschleunigen
          {
-
-             if (time_steps[i]<tb[j]) //Beschleunigen
-             {
-                 Stuetz.x.push_back(start.w.x+dir[j]*bm[j]*(pow(time_steps[i],2)*0.25+(pow(tb[j],2)/(8*M_PI*M_PI))*(cos(2*M_PI*time_steps[i]/tb[j])-1)));
-             }
-             if (time_steps[i] >= tb[j] & time_steps[i]<tv[j]) //konstante Geschwindigkeit
-             {
-                 Stuetz.x.push_back(start.w.x+dir[j]*vm[j]*(time_steps[i]-0.5*tb[j]));
-             }
-             if (time_steps[i] >= tv[j]) //Bremsphase
-             {
-                 Stuetz.x.push_back(start.w.x+dir[j]*bm[j]*0.5*(te[j]*(time_steps[i]+tb[j])     -0.5*(pow(time_steps[i],2)+pow(te[j],2)+2*pow(tb[j],2))    +pow(tb[j],2)/(4*pow(M_PI,2))    *(1-cos(2*M_PI*(time_steps[i]-tv[j])/tb[j]))    ));
-             }
+             temp = pow(time_step,2)*0.25+(pow(tb_m,2)/(8*M_PI*M_PI))*(cos(2*M_PI*time_step/tb_m)-1);
+             Stuetz.x.push_back(start.w.x+dir[0]*bm[0]*temp);
+             Stuetz.y.push_back(start.w.y+dir[1]*bm[1]*temp);
+             Stuetz.z.push_back(start.w.z+dir[2]*bm[2]*temp);
          }
-
-
-
-    //Y-Achse ******************************************
-    j=1;
-
-    for (int i=0; i<time_steps.size() ;i++) //Iteration über alle Stützstellen
-    {
-
-        if (time_steps[i]<tb[j]) //Beschleunigen
-        {
-            Stuetz.y.push_back(start.w.y+dir[j]*bm[j]*(pow(time_steps[i],2)*0.25+(pow(tb[j],2)/(8*M_PI*M_PI))*(cos(2*M_PI*time_steps[i]/tb[j])-1)));
-        }
-        if (time_steps[i] >= tb[j] & time_steps[i]<tv[j]) //konstante Geschwindigkeit
-        {
-            Stuetz.y.push_back(start.w.y+dir[j]*vm[j]*(time_steps[i]-0.5*tb[j]));
-        }
-        if (time_steps[i] >= tv[j]) //Bremsphase
-        {
-            Stuetz.y.push_back(start.w.y+dir[j]*bm[j]*0.5*(te[j]*(time_steps[i]+tb[j])     -0.5*(pow(time_steps[i],2)+pow(te[j],2)+2*pow(tb[j],2))    +pow(tb[j],2)/(4*pow(M_PI,2))    *(1-cos(2*M_PI*(time_steps[i]-tv[j])/tb[j]))    ));
-        }
-    }
-
-    //Z-Achse******************************************
-    j=2;
-
-    for (int i=0; i<time_steps.size() ;i++) //Iteration über alle Stützstellen
-    {
-
-        if (time_steps[i]<tb[j]) //Beschleunigen
-        {
-            Stuetz.z.push_back(start.w.z+dir[j]*bm[j]*(pow(time_steps[i],2)*0.25+(pow(tb[j],2)/(8*M_PI*M_PI))*(cos(2*M_PI*time_steps[i]/tb[j])-1)));
-        }
-        if (time_steps[i] >= tb[j] & time_steps[i]<tv[j]) //konstante Geschwindigkeit
-        {
-            Stuetz.z.push_back(start.w.z+dir[j]*vm[j]*(time_steps[i]-0.5*tb[j]));
-        }
-        if (time_steps[i] >= tv[j]) //Bremsphase
-        {
-            Stuetz.z.push_back(start.w.z+dir[j]*bm[j]*0.5*(te[j]*(time_steps[i]+tb[j])     -0.5*(pow(time_steps[i],2)+pow(te[j],2)+2*pow(tb[j],2))    +pow(tb[j],2)/(4*pow(M_PI,2))    *(1-cos(2*M_PI*(time_steps[i]-tv[j])/tb[j]))    ));
-        }
-    }
-
-
-
-
-
+         if (time_step >= tb_m & time_step<tv_m) //konstante Geschwindigkeit
+         {
+             temp = time_step-0.5*tb_m;
+             Stuetz.x.push_back(start.w.x+dir[0]*vm[0]*temp);
+             Stuetz.y.push_back(start.w.y+dir[1]*vm[1]*temp);
+             Stuetz.z.push_back(start.w.z+dir[2]*vm[2]*temp);
+         }
+         if (time_step >= tv_m) //Bremsphase
+         {
+             temp = 0.5*(te_m*(time_step+tb_m)-0.5*(pow(time_step,2)+pow(te_m,2)+2*pow(tb_m,2))+pow(tb_m,2)/(4*pow(M_PI,2))*(1-cos(2*M_PI*(time_step-tv_m)/tb_m)));
+             Stuetz.x.push_back(start.w.x+dir[0]*bm[0]*temp);
+             Stuetz.y.push_back(start.w.y+dir[1]*bm[1]*temp);
+             Stuetz.z.push_back(start.w.z+dir[2]*bm[2]*temp);
+         }
+     }
 
     return Stuetz;
-
 }
