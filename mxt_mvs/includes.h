@@ -29,5 +29,7 @@
 #include "strdef.h"
 #include "mxt.h"
 #include "rt.h"
+#include "bahnplanung.h"
+#include "r3_protocol.h"
 
 #endif // INCLUDES_H
