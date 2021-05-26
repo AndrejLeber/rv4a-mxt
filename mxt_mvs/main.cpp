@@ -18,12 +18,12 @@ int main()
     mxt_init();
 
     // Definieren einer Zielposition
-    POSE ziel;
-    ziel.w.x = 200.0;
-    ziel.w.y = 200.0;
-    ziel.w.z = 145.0;
+    POSE* ziel = new  (POSE);
+    ziel->w.x = 200.0;
+    ziel->w.y = 200.0;
+    ziel->w.z = 145.0;
 
-    void* data = (void*)&ziel;
+    void* data = (void*)ziel;
     init_rt_mvs_thread(80, data, endcmd);
 
 }

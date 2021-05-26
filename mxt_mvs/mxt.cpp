@@ -50,21 +50,22 @@ void mxt_prep_recv_pos(MXTCMD &cmd) {
 }
 
 // Vorbereiten des MXT- Befehls zum Senden und Ausführen neuer Positionsdaten (Bewegung)
-void mxt_prep_move_pos(MXTCMD &cmd, POSE pos) {
-    memset(&cmd, 0, sizeof (cmd));
+MXTCMD mxt_prep_move_pos(POSE pos) {
+    MXTCMD res;
+    memset(&res, 0, sizeof (res));
 
-    cmd.Command = MXT_CMD_MOVE;
-    cmd.SendType = MXT_TYP_POSE;
-    cmd.RecvType = MXT_TYP_POSE;
-    cmd.SendIOType = MXT_IO_NULL;
-    cmd.RecvIOType = MXT_IO_NULL;
-    cmd.RecvType1 = MXT_TYP_POSE;
-    cmd.RecvType2 = MXT_TYP_JOINT;
-    cmd.RecvType3 = MXT_TYP_PULSE;
+    res.Command = MXT_CMD_MOVE;
+    res.SendType = MXT_TYP_POSE;
+    res.RecvType = MXT_TYP_POSE;
+    res.SendIOType = MXT_IO_NULL;
+    res.RecvIOType = MXT_IO_NULL;
+    res.RecvType1 = MXT_TYP_POSE;
+    res.RecvType2 = MXT_TYP_JOINT;
+    res.RecvType3 = MXT_TYP_PULSE;
 
-    cmd.dat.pos.w.x = pos.w.x;
-    cmd.dat.pos.w.y = pos.w.y;
-    cmd.dat.pos.w.z = pos.w.z;
+    res.dat.pos = pos;
+
+    return res;
 }
 
 // Vorbereiten des MXT- Befehls zum Beenden von MXT
@@ -169,20 +170,17 @@ void *mxt_mvs_pos(void* data)
 
     // Aktuelle Roboterposition
     POSE start;
-    start.w.x = mxt_recv.dat.pos.w.x;
-    start.w.y = mxt_recv.dat.pos.w.y;
-    start.w.z = mxt_recv.dat.pos.w.z;
+    start = mxt_recv.dat.pos;
 
     // Zielposition der MVS-Funktion
-    POSE *ziel = (POSE*)(data);
+    POSE *ziel = (POSE*)data;
 
-    // Bewegung über MVS-Funktion zur Zielposition (v  = 5%)
+    // Bewegung über MVS-Funktion zur Zielposition
     int moveit = 0;
-    moveit = mvs(mxt_send, mxt_recv, start, ziel, 1);
-    if (moveit) {}
-
-
-    return nullptr;
+    moveit = mvs(mxt_send, mxt_recv, start, ziel, 10.0f);
+    if (moveit) {
+            return nullptr;
+    }
 }
 
 int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed) {
@@ -192,6 +190,19 @@ int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed)
     xdiff = ziel->w.x-start.w.x;
     ydiff = ziel->w.y-start.w.y;
     zdiff = ziel->w.z-start.w.z;
+
+    //TEST
+    printf("Startposition: x=%f, y=%f, z=%f\n", static_cast<double>(start.w.x),
+                                                     static_cast<double>(start.w.y),
+                                                     static_cast<double>(start.w.z));
+
+    printf("Startwinkel: a=%f, b=%f, c=%f\n", static_cast<double>(start.w.a),
+                                                     static_cast<double>(start.w.b),
+                                                     static_cast<double>(start.w.c));
+
+    printf("Zielposition: x=%f, y=%f, z=%f\n", static_cast<double>(ziel->w.x),
+                                                     static_cast<double>(ziel->w.y),
+                                                     static_cast<double>(ziel->w.z));
 
     printf("Entfernung in x-Richtung = %f mm\n", static_cast<double>(xdiff));
     printf("Entfernung in y-Richtung = %f mm\n", static_cast<double>(ydiff));
@@ -227,24 +238,33 @@ int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed)
     printf("Berechnete Schrittweite in z-Richtung = %f mm\n", static_cast<double>(dz));
 
     // Konfigurieren der MXt-Bewegung
-    mxt_prep_move_pos(mxt_send, start);
+    mxt_send = mxt_prep_move_pos(start);
+
+    //printf("%i %i", mxt_send.Command, mxt_send.SendType);
 
     // Zeitmessung
     struct timespec ts0, ts1, ts2;
     clock_gettime(CLOCK_MONOTONIC,&ts0);
 
+    // Vorbereiten zum Senden
+    FD_ZERO(&rxfds);
+    FD_SET(sock, &rxfds);
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
+
     // Starten der Fahrbewegung
     for (int i = 0; i < dminschritte; i++) {
 
-        FD_ZERO(&rxfds);
-        FD_SET(sock, &rxfds);
-        timeout.tv_sec = 10;
-        timeout.tv_usec = 0;
+        printf("Schleifendurchlauf: %i\n", i);
 
         // Vorbereiten des (nächsten) Schritts
         mxt_send.dat.pos.w.x += dx;
         mxt_send.dat.pos.w.y += dy;
         mxt_send.dat.pos.w.z += dz;
+
+        printf("Gesendete Position: x=%f, y=%f, z=%f\n", static_cast<double>(mxt_send.dat.pos.w.x),
+                                                         static_cast<double>(mxt_send.dat.pos.w.y),
+                                                         static_cast<double>(mxt_send.dat.pos.w.z));
 
         //Ausführen des nächsten Schritts
         slen = sendto(sock, static_cast<void*>(&mxt_send), sizeof(mxt_send), 0, reinterpret_cast<struct sockaddr*>(&transmit_addr), sizeof(transmit_addr));
@@ -255,9 +275,10 @@ int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed)
             printf("%ld bytes succesfully sent\n",slen);
             clock_gettime(CLOCK_MONOTONIC, &ts1);
         }
-        ready = select(sock + 1, &rxfds, nullptr, nullptr, &timeout);
+        ready = select(sock + 1 , &rxfds, nullptr, nullptr, &timeout);
         if(!ready) {
-            printf("Connection Timeout\n"); return 0;
+            printf("Connection Timeout\n");
+            return 0;
         }
         rlen = recvfrom(sock, static_cast<void*>(&mxt_recv), sizeof (mxt_recv), 0, nullptr, nullptr);
         if (rlen != sizeof (mxt_recv)) {
@@ -269,9 +290,7 @@ int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed)
         printf("Zeitstempel (vor send): %fms\n", 1000.0*ts1.tv_sec-1000.0*ts0.tv_sec+1e-6*ts1.tv_nsec-1e-6*ts0.tv_nsec);
         printf("Zeitstempel (nach recv): %fms\n", 1000.0*ts2.tv_sec-1000.0*ts0.tv_sec+1e-6*ts2.tv_nsec-1e-6*ts0.tv_nsec);
         printf("Delta-Zeitstempel: %fms\n", 1000.0*ts2.tv_sec-1000.0*ts1.tv_sec+1e-6*ts2.tv_nsec-1e-6*ts1.tv_nsec);
-        printf("Gesendete Position: x=%f, y=%f, z=%f\n", static_cast<double>(mxt_send.dat.pos.w.x),
-                                                         static_cast<double>(mxt_send.dat.pos.w.y),
-                                                         static_cast<double>(mxt_send.dat.pos.w.z));
+
     }
 
     return -1;
