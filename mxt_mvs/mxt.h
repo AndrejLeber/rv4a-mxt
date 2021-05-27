@@ -7,9 +7,6 @@
 // Globale Variablen
 extern int endcmd;
 
-// Beenden des Programms (STRG+C)
-void endprg(int dummy);
-
 // Berechnen und Ausführen einer einzelnen MVS-Bewegung
 int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed);
 

@@ -102,6 +102,9 @@ int start_robot(long sock) {
         std::cout << "Failed to open communication " << response << std::endl;
         return -1;
     }
+    else {
+        std::cout << response << std::endl;
+    }
 
     // Obtain control to start the servos
     send_command(sock, CMD_CTRL_ON);
@@ -110,6 +113,9 @@ int start_robot(long sock) {
         std::cout << "Failed to obtain control " << response << std::endl;
         return -1;
     }
+    else {
+        std::cout << response << std::endl;
+    }
 
     // Start the servos
     send_command(sock, CMD_SRV_ON);
@@ -117,6 +123,9 @@ int start_robot(long sock) {
     if (ret == -1) {
         std::cout << "Failed to activate the servos " << response << std::endl;
         return -1;
+    }
+    else {
+        std::cout << response << std::endl;
     }
 
     // Poll the servo state
@@ -162,5 +171,5 @@ void stop_robot(long sock) {
     }
 
     // Close the TCP-socket
-    //close(sock);
+    // close(sock);
 }

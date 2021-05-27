@@ -20,7 +20,7 @@
 #define CMD_CTRL_OFF        CREATE_CMD("CNTLOFF")           // Command to release control
 #define CMD_OPEN_COM        CREATE_CMD("OPEN=NARCUSER")     // Open a new connection
 #define CMD_CLOSE_COM       CREATE_CMD("CLOSE")             // Close a connection
-#define CMD_PRG_LOAD        CREATE_CMD("PRGLOAD=")          // Load a program into the active slot
+#define CMD_PRG_LOAD        CREATE_CMD("PRGLOAD=")          // Load program 1 into the active slot
 #define CMD_PRG_RUN         CREATE_CMD("RUN")               // Run the given program number or run the one in the active slot if  omitted
 #define CMD_PRG_STOP        CREATE_CMD("STOP")              // Stop the program
 #define CMD_PRG_RESET       CREATE_CMD("SLOTINIT")          // Reset the program slot

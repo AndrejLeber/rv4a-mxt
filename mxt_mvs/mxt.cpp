@@ -9,16 +9,10 @@ static fd_set rxfds;
 static int ready;
 static struct sockaddr_in transmit_addr;
 static timeval timeout;
+int endcmd;
 
 MXTCMD MXTsend;
 MXTCMD MXTrecv;
-
-// Programmabbruch mit STRG+C
-int endcmd = 0;
-void endprg(int dummy) {
-    dummy += dummy;
-    endcmd = 1;
-}
 
 // Erstellen und Aufrufen des UDP- Sockets
 void mxt_init() {

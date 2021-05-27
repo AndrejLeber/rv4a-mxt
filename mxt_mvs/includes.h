@@ -24,6 +24,7 @@
 #include <limits.h>
 #include <chrono>
 #include <vector>
+#include "unistd.h"
 
 // Eigene Headers
 #include "strdef.h"

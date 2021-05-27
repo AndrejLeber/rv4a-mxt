@@ -13,7 +13,7 @@ typedef struct {
     std::vector<float> z;
 }STEPS;
 
-STEPS Sinoide(POSE start,POSE target,float);
+STEPS Sinoide(POSE start, POSE target,float speed);
 
 
 
