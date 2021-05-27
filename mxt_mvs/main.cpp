@@ -5,6 +5,7 @@
  */
 
 #include <includes.h>
+#include "matplotlibcpp.h"
 
 // #define R3
 
@@ -50,25 +51,49 @@ int main()
     POSE start, ziel;
     start.w.x = 200.0f;
     start.w.y = 200.0f;
-    start.w.z = 150.0f;
+    start.w.z = 148.0f;
 
     // Definieren einer Zielposition
     ziel.w.x = 200.0f;
     ziel.w.y = 200.0f;
-    ziel.w.z = 100.0f;
+    ziel.w.z = 150.0f;
 
-    STEPS res;
-    res = Sinoide(start, ziel, 1);
+    auto t0 = std::chrono::steady_clock::now();
+    STEPS x = Sinoide(start, ziel, 10);
+    auto end = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - t0);
 
-//    std::cout << res.y.size() << std::endl;
-
-//    std::vector<int> test = {1,2,3,4,5};
-//    std::cout << test.size() << std::endl;
-//    std::cout << res.x[0] << std::endl;
-
-    for (int i = 0; i < res.x.size(); i++) {
-        std::cout << "x" << i << " = " << res.x[i] << "mm,  y" << i << " = " << res.y[i] << "mm,  z" << i << " = " << res.z[i] << "mm" << std::endl;
+    for (unsigned int i = 0; i < x.x.size(); i++) {
+        std::cout << "x" << i << " = " << x.x.at(i) << "mm,  y" << i << " = " << x.y.at(i) << "mm,  z" << i << " = " << x.z.at(i) << "mm" << std::endl;
     }
+
+    std::cout << "Laufzeit Bahnplaner [micro_s]: " << elapsed.count() << std::endl;
+
+    // Ergebnisse der Bahnplanung
+    namespace plt = matplotlibcpp;
+    plt::plot(x.t,x.z);
+    plt::save("/home/pi/Desktop/bahn_x.png");
+    plt::clf();
+
+    // Geschwindkeitsverlauf und Beschleunigungsverlauf berechnen und plottten
+    std::vector<float> v, a;
+    v.push_back(0.0f);
+    a.push_back(0.0f);
+    for (unsigned int i = 0; i < x.z.size()-1; i++) {
+        v.push_back(x.z.at(i+1)-x.z.at(i));
+    }
+    for (unsigned int i = 0; i < x.z.size()-1; i++) {
+        a.push_back(v.at(i+1)-v.at(i));
+    }
+    plt::plot(x.t,v);
+    plt::save("/home/pi/Desktop/bahn_v.png");
+    plt::clf();
+
+    plt::plot(x.t,a);
+    plt::save("/home/pi/Desktop/bahn_a.png");
+    plt::clf();
+
+
 
     // // Definieren einer Zielposition
     //    POSE* ziel = new(POSE);
@@ -78,10 +103,6 @@ int main()
     //    mxt_init();
     //    void* data = (void*)ziel;
     //    init_rt_mvs_thread(80, data, endcmd);
-
-
-    //std::string ip = "192.168.0.1";
-    //uint16_t port = 10001;
 
     while(!endcmd) {
 

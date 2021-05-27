@@ -24,6 +24,7 @@ std::vector<int> sign (const std::vector<T> &v) {
 }
 
 STEPS Sinoide(POSE start, POSE target, float speed){
+
     STEPS Stuetz; // Struktur mit Stützstellen in x,y,z
     int n_Axis=3;
     vector<float> se(3); // Teilstrecke für x,y,z
@@ -131,6 +132,8 @@ STEPS Sinoide(POSE start, POSE target, float speed){
             Stuetz.z.push_back(start.w.z+dir[2]*bm[2]*temp);
         }
     }
+
+    Stuetz.t = time_steps;
 
     return Stuetz;
 }
