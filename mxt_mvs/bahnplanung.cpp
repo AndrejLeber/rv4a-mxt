@@ -23,12 +23,12 @@ std::vector<int> sign (const std::vector<T> &v) {
     return r;
 }
 
-STEPS Sinoide(POSE start, POSE target, float speed){
+STEPS Sinoide(POSE start, POSE target, float speed, float acc){
 
     STEPS Stuetz; // Struktur mit Stützstellen in x,y,z
     int n_Axis=3;
     vector<float> se(3); // Teilstrecke für x,y,z
-    vector<int> bm{200,200,200}; // Maximale Achsbeschleunigung
+    vector<float> bm{acc,acc,acc}; // Maximale Achsbeschleunigung
     vector<float>vm(3); // Geschwindigkeit der Einzelachsen
     vector<float>tb(3); // Zeit für Bremsen oder Beschleunigen
     vector<float>tv(3); // Zeit während konstanter Geschwindigkeit
@@ -98,7 +98,8 @@ STEPS Sinoide(POSE start, POSE target, float speed){
         bm[i]=2*vm[i]/tb_m;
     }
 
-    int a=te_m/tipo; // Berechnen der notwendig Anzahl an Stützstellen
+    float b = te_m/tipo;
+    int a=floor(b); // Berechnen der notwendig Anzahl an Stützstellen
 
     for (int i=0; i<a;i++) // t-Vektor füllen mit Zeiten... 0, 0.1, 0.2 ,....
     {
@@ -117,14 +118,14 @@ STEPS Sinoide(POSE start, POSE target, float speed){
             Stuetz.y.push_back(start.w.y+dir[1]*bm[1]*temp);
             Stuetz.z.push_back(start.w.z+dir[2]*bm[2]*temp);
         }
-        if (time_step >= tb_m & time_step<tv_m) //konstante Geschwindigkeit
+        else if (time_step < tv_m) //konstante Geschwindigkeit
         {
             temp = time_step-0.5*tb_m;
             Stuetz.x.push_back(start.w.x+dir[0]*vm[0]*temp);
             Stuetz.y.push_back(start.w.y+dir[1]*vm[1]*temp);
             Stuetz.z.push_back(start.w.z+dir[2]*vm[2]*temp);
         }
-        if (time_step >= tv_m) //Bremsphase
+        else //Bremsphase
         {
             temp = 0.5*(te_m*(time_step+tb_m)-0.5*(pow(time_step,2)+pow(te_m,2)+2*pow(tb_m,2))+pow(tb_m,2)/(4*pow(M_PI,2))*(1-cos(2*M_PI*(time_step-tv_m)/tb_m)));
             Stuetz.x.push_back(start.w.x+dir[0]*bm[0]*temp);
@@ -134,6 +135,15 @@ STEPS Sinoide(POSE start, POSE target, float speed){
     }
 
     Stuetz.t = time_steps;
+
+    if(b > a){
+        // Abgeschnittene Ganzzahl an Stellen reicht nicht genau aus. Daher Ziel im zusätzlichen Schritt exakt.
+        Stuetz.x.push_back(target.w.x);
+        Stuetz.y.push_back(target.w.y);
+        Stuetz.z.push_back(target.w.z);
+        Stuetz.t.push_back(time_steps[time_steps.size()-1]+tipo);
+    }
+
 
     return Stuetz;
 }

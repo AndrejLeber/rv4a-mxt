@@ -11,6 +11,8 @@ static struct sockaddr_in transmit_addr;
 static timeval timeout;
 int endcmd;
 
+STEPS recv_msgs;
+
 MXTCMD MXTsend;
 MXTCMD MXTrecv;
 
@@ -131,7 +133,7 @@ void *mxt_recv_pos(void* data)
     return data;
 }
 
-void *mxt_mvs_pos(void* data)
+void* mxt_mvs_pos(void* data)
 {
     // Erstellen der notwendigen MXT-Variablen
     MXTCMD mxt_send;
@@ -167,17 +169,19 @@ void *mxt_mvs_pos(void* data)
     start = mxt_recv.dat.pos;
 
     // Zielposition der MVS-Funktion
-    POSE *ziel = (POSE*)data;
+    POSE* ziel;
+    ziel = (POSE*)data;
 
     // Bewegung über MVS-Funktion zur Zielposition
     int moveit = 0;
-    moveit = mvs(mxt_send, mxt_recv, start, ziel, 10.0f);
+    moveit = move_sinoide(mxt_send, mxt_recv, start, ziel, 20.0f, 400.0f);
     if (moveit) {
-            return nullptr;
+        return nullptr;
     }
 }
 
 int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed) {
+
 
     // Berechnen und Ausgeben der Entfernung von aktueller Roboterposition zur Zielposition
     float xdiff, ydiff, zdiff;
@@ -187,16 +191,16 @@ int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed)
 
     //TEST
     printf("Startposition: x=%f, y=%f, z=%f\n", static_cast<double>(start.w.x),
-                                                     static_cast<double>(start.w.y),
-                                                     static_cast<double>(start.w.z));
+           static_cast<double>(start.w.y),
+           static_cast<double>(start.w.z));
 
     printf("Startwinkel: a=%f, b=%f, c=%f\n", static_cast<double>(start.w.a),
-                                                     static_cast<double>(start.w.b),
-                                                     static_cast<double>(start.w.c));
+           static_cast<double>(start.w.b),
+           static_cast<double>(start.w.c));
 
     printf("Zielposition: x=%f, y=%f, z=%f\n", static_cast<double>(ziel->w.x),
-                                                     static_cast<double>(ziel->w.y),
-                                                     static_cast<double>(ziel->w.z));
+           static_cast<double>(ziel->w.y),
+           static_cast<double>(ziel->w.z));
 
     printf("Entfernung in x-Richtung = %f mm\n", static_cast<double>(xdiff));
     printf("Entfernung in y-Richtung = %f mm\n", static_cast<double>(ydiff));
@@ -257,8 +261,8 @@ int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed)
         mxt_send.dat.pos.w.z += dz;
 
         printf("Gesendete Position: x=%f, y=%f, z=%f\n", static_cast<double>(mxt_send.dat.pos.w.x),
-                                                         static_cast<double>(mxt_send.dat.pos.w.y),
-                                                         static_cast<double>(mxt_send.dat.pos.w.z));
+               static_cast<double>(mxt_send.dat.pos.w.y),
+               static_cast<double>(mxt_send.dat.pos.w.z));
 
         //Ausführen des nächsten Schritts
         slen = sendto(sock, static_cast<void*>(&mxt_send), sizeof(mxt_send), 0, reinterpret_cast<struct sockaddr*>(&transmit_addr), sizeof(transmit_addr));
@@ -288,5 +292,66 @@ int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed)
     }
 
     return -1;
+}
+
+int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, POSE* ziel, float v, float a) {
+    STEPS path = Sinoide(start, *ziel, v, a);
+
+    for (unsigned int i = 0; i < path.x.size(); i++) {
+        std::cout << "x" << i << " = " << path.x.at(i) << "mm,  y" << i << " = " << path.y.at(i)
+                  << "mm,  z" << i << " = " << path.z.at(i) << "mm" << std::endl;
+    }
+
+    // Konfigurieren der MXt-Bewegung
+    send_sinoide = mxt_prep_move_pos(start);
+
+    // Ausführen der geplanten Bahn
+    for (unsigned int i = 0; i < path.x.size(); i++) {
+
+        // Vorbereiten zum Senden
+        FD_ZERO(&rxfds);
+        FD_SET(sock, &rxfds);
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+
+        // Vorbereiten des (nächsten) Schritts
+        send_sinoide.dat.pos.w.x = path.x.at(i);
+        send_sinoide.dat.pos.w.y = path.y.at(i);
+        send_sinoide.dat.pos.w.z = path.z.at(i);
+
+        recv_msgs.t = path.t;
+
+        printf("Gesendete Position: x=%f, y=%f, z=%f\n", static_cast<double>(send_sinoide.dat.pos.w.x),
+               static_cast<double>(send_sinoide.dat.pos.w.y),
+               static_cast<double>(send_sinoide.dat.pos.w.z));
+
+        //Ausführen des nächsten Schritts
+        slen = sendto(sock, static_cast<void*>(&send_sinoide), sizeof(send_sinoide), 0, reinterpret_cast<struct sockaddr*>(&transmit_addr), sizeof(transmit_addr));
+        if(slen!=sizeof(send_sinoide)) {
+            printf("Could not send package, %ld bytes sent\n", slen);
+        }
+        else {
+            printf("%ld bytes succesfully sent\n",slen);
+        }
+        ready = select(sock + 1 , &rxfds, nullptr, nullptr, &timeout);
+        if(!ready) {
+            printf("Connection Timeout\n");
+            return 0;
+        }
+        rlen = recvfrom(sock, static_cast<void*>(&recv_sinoide), sizeof (recv_sinoide), 0, nullptr, nullptr);
+        if (rlen != sizeof (recv_sinoide)) {
+            printf("%ld bytes recieved, but not equal to size of MXTrecv.\n", rlen);
+        }
+
+        printf("Empfangene Position: x=%f, y=%f, z=%f\n", static_cast<double>(recv_sinoide.dat.pos.w.x),
+               static_cast<double>(recv_sinoide.dat.pos.w.y),
+               static_cast<double>(recv_sinoide.dat.pos.w.z));
+
+        recv_msgs.x.push_back(recv_sinoide.dat.pos.w.x);
+        recv_msgs.y.push_back(recv_sinoide.dat.pos.w.y);
+        recv_msgs.z.push_back(recv_sinoide.dat.pos.w.z);
+    }
+
+    return 0;
 }
 

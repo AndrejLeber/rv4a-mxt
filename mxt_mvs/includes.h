@@ -32,5 +32,6 @@
 #include "rt.h"
 #include "bahnplanung.h"
 #include "r3_protocol.h"
+#include "matplotlibcpp.h"
 
 #endif // INCLUDES_H

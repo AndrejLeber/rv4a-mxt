@@ -3,12 +3,17 @@
 #define FUNCTIONS_H
 
 #include "strdef.h"
+#include "bahnplanung.h"
 
 // Globale Variablen
 extern int endcmd;
+extern STEPS recv_msgs;
 
 // Berechnen und Ausführen einer einzelnen MVS-Bewegung
 int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed);
+
+// Ausführen ddees Sinoidenprofils
+int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, POSE* ziel, float v, float a);
 
 // Empfangen und Ausgeben der aktuellen Roboterposition
 void *mxt_recv_pos(void* data);

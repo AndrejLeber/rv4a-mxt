@@ -62,8 +62,5 @@ int init_rt_mvs_thread(int prio, void* data, int endcmd) {
     }
 out:
     munlockall();
-//    while(!endcmd) {
-
-//    }
     return ret;
 }

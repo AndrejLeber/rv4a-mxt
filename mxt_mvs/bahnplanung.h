@@ -14,7 +14,7 @@ typedef struct {
     std::vector<float> t;
 }STEPS;
 
-STEPS Sinoide(POSE start, POSE target,float speed);
+STEPS Sinoide(POSE start, POSE target,float speed, float acc);
 
 
 
