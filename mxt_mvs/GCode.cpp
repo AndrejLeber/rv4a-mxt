@@ -53,8 +53,10 @@ istream& operator>>(istream& is, GCode& gcode){
     // Remove leading whitespace
     start = gcode.text.find_first_not_of(' ');
     // Remove trailing whitespace and checksum asterisk
-    end = gcode.text.find_last_not_of(" *");
-    gcode.text = gcode.text.substr(start, end - start + 1);
+    end = gcode.text.find_last_of('*');
+    gcode.text = gcode.text.substr(start, end - start);
+    end = gcode.text.find_last_not_of(' ');
+    gcode.text = gcode.text.substr(0, end + 1);
 
     // Convert all characters to uppercase
     for (auto & c: gcode.text) c = (char)toupper(c);
