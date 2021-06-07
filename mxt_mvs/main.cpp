@@ -18,10 +18,12 @@ extern STEPS recv_msgs;
 void endprg(int dummy) {
     dummy += dummy;
     endcmd = 1;
-    std::cout << "Ending program..." << std::endl;
+    std::cout << "\n\nEnding program...\n\n" << std::endl;
     stop_robot(sock);
     usleep(1e4);
     close(sock);
+    usleep(1e6);
+    exit(-1);
 }
 
 int main()
@@ -99,7 +101,6 @@ int main()
     plt::clf();
 #endif
 
-
     char var;
     std::cout << "Bitte Enter drücken um fortzufahren." << std::endl;
     std::cin >> var;
@@ -107,28 +108,23 @@ int main()
 
     // Definieren einer Zielposition
     POSE* ziel = new(POSE);
-    ziel->w.x = 150.01;
-    ziel->w.y = 250.02;
-    ziel->w.z = 200.03;
+    ziel->w.x = 150.01f;
+    ziel->w.y = 250.02f;
+    ziel->w.z = 200.03f;
     mxt_init();
     void* data = (void*)ziel;
-    init_rt_mvs_thread(80, data, endcmd);
-
-    ziel->w.x = 100.0;
-    ziel->w.y = 200.0;
-    ziel->w.z = 50.0;
     init_rt_mvs_thread(80, data, endcmd);
 
     std::cout << "1. Element von x: " << recv_msgs.x.at(0) << std::endl;
     matplotlibcpp::subplot(3,1,1);
     matplotlibcpp::plot(recv_msgs.t, recv_msgs.x);
     matplotlibcpp::title("Gefahrene Wegstrcke in x-Richtung");
-    matplotlibcpp::xlabel("Zeit t [s]");
+    //matplotlibcpp::xlabel("Zeit t [s]");
     matplotlibcpp::ylabel("x in [mm]");
     matplotlibcpp::subplot(3,1,2);
     matplotlibcpp::plot(recv_msgs.t, recv_msgs.y);
     matplotlibcpp::title("Gefahrene Wegstrcke in y-Richtung");
-    matplotlibcpp::xlabel("Zeit t [s]");
+    //matplotlibcpp::xlabel("Zeit t [s]");
     matplotlibcpp::ylabel("y in [mm]");
     matplotlibcpp::subplot(3,1,3);
     matplotlibcpp::plot(recv_msgs.t, recv_msgs.z);

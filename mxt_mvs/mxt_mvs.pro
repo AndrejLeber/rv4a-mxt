@@ -1,5 +1,5 @@
 TEMPLATE = app
-CONFIG += console c++11
+CONFIG += console c++1z
 CONFIG -= app_bundle
 CONFIG -= qt
 
@@ -8,7 +8,8 @@ SOURCES += \
     mxt.cpp \
     rt.cpp \
     bahnplanung.cpp \
-    r3_protocol.cpp
+    r3_protocol.cpp \
+    GCode.cpp
 
 LIBS += \
     -lpthread
@@ -22,4 +23,5 @@ HEADERS += \
     rt.h \
     bahnplanung.h \
     r3_protocol.h \
-    matplotlibcpp.h
+    matplotlibcpp.h \
+    GCode.h
