@@ -7,6 +7,6 @@
 extern STEPS recv_msgs;
 
 // Parametrieren und Ausführen des Echtzeitthreads
-int init_rt_mvs_thread(int prio, void* data, int endcmd);
+int init_rt_mvs_thread(int prio, void* data);
 
 #endif // RT_H

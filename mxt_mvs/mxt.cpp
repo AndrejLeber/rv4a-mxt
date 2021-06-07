@@ -9,7 +9,7 @@ static fd_set rxfds;
 static int ready;
 static struct sockaddr_in transmit_addr;
 static timeval timeout;
-int endcmd;
+extern int endcmd;
 
 STEPS recv_msgs;
 
@@ -155,7 +155,6 @@ void* mxt_mvs_pos(void* data)
     ready = select(sock + 1, &rxfds, nullptr, nullptr, &timeout);
     if (!ready) {
         printf("Connection timeout, please try again.\n");
-        return nullptr;
     }
     rlen = recvfrom(sock, static_cast<void*>(&mxt_recv), sizeof (mxt_recv), 0, nullptr, nullptr);
     if (rlen != sizeof (mxt_recv)) {
@@ -168,16 +167,33 @@ void* mxt_mvs_pos(void* data)
     POSE start;
     start = mxt_recv.dat.pos;
 
-    // Zielposition der MVS-Funktion
-    POSE* ziel;
-    ziel = (POSE*)data;
+    // Zielposition(en) der Move_Sinoide-Funktion
+    std::vector<POSE> *ziel = (std::vector<POSE>*)data;
 
-    // Bewegung über MVS-Funktion zur Zielposition
-    int moveit = 0;
-    moveit = move_sinoide(mxt_send, mxt_recv, start, ziel, 20.0f, 400.0f);
-    if (moveit) {
-        return nullptr;
+    std::vector<POSE> stuetzstellen;
+
+    stuetzstellen.push_back(start);
+    std::cout << "Beginne bei Position: x = " << stuetzstellen.at(0).w.x << "; y = " << stuetzstellen.at(0).w.y <<
+                 "; z = " << stuetzstellen.at(0).w.z << std::endl;
+    for (unsigned int i = 0; i < ziel->size(); i++) {
+        stuetzstellen.push_back(ziel->at(i));
+        std::cout << "Fahre zu Position "<< i+1 << ": x = " << stuetzstellen.at(i+1).w.x << "; y = " << stuetzstellen.at(i+1).w.y <<
+                     "; z = " << stuetzstellen.at(i+1).w.z << std::endl;
     }
+
+    // Bewegung über Move_Sinoide-Funktion zu der (den) Zielposition(en)
+    int moveit = 0;
+
+    std::cout << "Anzahl der berechneten Fahrpukte: " << stuetzstellen.size()-1 << std::endl;
+
+    for (unsigned int i = 0; i < stuetzstellen.size()-1; i++) {
+        start = mxt_recv.dat.pos;
+        start.w.x = stuetzstellen.at(i).w.x;
+        start.w.y = stuetzstellen.at(i).w.y;
+        start.w.z = stuetzstellen.at(i).w.z;
+        moveit = move_sinoide(mxt_send, mxt_recv, start, &stuetzstellen.at(i+1), 50.0f, 2000.0f);
+    }
+    return nullptr;
 }
 
 int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed) {
@@ -297,12 +313,12 @@ int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed)
 int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, POSE* ziel, float v, float a) {
     STEPS path = Sinoide(start, *ziel, v, a);
 
-    for (unsigned int i = 0; i < path.x.size(); i++) {
-        std::cout << "x" << i << " = " << path.x.at(i) << "mm,  y" << i << " = " << path.y.at(i)
-                  << "mm,  z" << i << " = " << path.z.at(i) << "mm" << std::endl;
-    }
+//    for (unsigned int i = 0; i < path.x.size(); i++) {
+//        std::cout << "x" << i << " = " << path.x.at(i) << "mm,  y" << i << " = " << path.y.at(i)
+//                  << "mm,  z" << i << " = " << path.z.at(i) << "mm" << std::endl;
+//    }
 
-    // Konfigurieren der MXt-Bewegung
+    // Konfigurieren der MXT-Bewegung
     send_sinoide = mxt_prep_move_pos(start);
 
     // Ausführen der geplanten Bahn
@@ -319,11 +335,11 @@ int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, POSE* zie
         send_sinoide.dat.pos.w.y = path.y.at(i);
         send_sinoide.dat.pos.w.z = path.z.at(i);
 
-        recv_msgs.t = path.t;
-
         printf("Gesendete Position: x=%f, y=%f, z=%f\n", static_cast<double>(send_sinoide.dat.pos.w.x),
                static_cast<double>(send_sinoide.dat.pos.w.y),
                static_cast<double>(send_sinoide.dat.pos.w.z));
+
+        auto t_start = std::chrono::steady_clock::now();
 
         //Ausführen des nächsten Schritts
         slen = sendto(sock, static_cast<void*>(&send_sinoide), sizeof(send_sinoide), 0, reinterpret_cast<struct sockaddr*>(&transmit_addr), sizeof(transmit_addr));
@@ -338,10 +354,15 @@ int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, POSE* zie
             printf("Connection Timeout\n");
             return 0;
         }
+
         rlen = recvfrom(sock, static_cast<void*>(&recv_sinoide), sizeof (recv_sinoide), 0, nullptr, nullptr);
         if (rlen != sizeof (recv_sinoide)) {
             printf("%ld bytes recieved, but not equal to size of MXTrecv.\n", rlen);
         }
+
+        auto t_end = std::chrono::steady_clock::now();
+
+        double timestep = std::chrono::duration_cast<std::chrono::microseconds>(t_end-t_start).count()/1e6;
 
         printf("Empfangene Position: x=%f, y=%f, z=%f\n", static_cast<double>(recv_sinoide.dat.pos.w.x),
                static_cast<double>(recv_sinoide.dat.pos.w.y),
@@ -350,8 +371,17 @@ int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, POSE* zie
         recv_msgs.x.push_back(recv_sinoide.dat.pos.w.x);
         recv_msgs.y.push_back(recv_sinoide.dat.pos.w.y);
         recv_msgs.z.push_back(recv_sinoide.dat.pos.w.z);
-    }
 
+        try {
+            recv_msgs.t.push_back(recv_msgs.t.at(recv_msgs.t.size()-1)+static_cast<float>(timestep));
+            std::cout << "Zeitstempel: " << recv_msgs.t.at(recv_msgs.t.size()-1) << std::endl;
+        } catch (...) {
+            recv_msgs.t.push_back(0.0f);
+            std::cout << "Zeitstempel: " << recv_msgs.t.at(0) << std::endl;
+        }
+
+
+    }
     return 0;
 }
 

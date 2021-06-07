@@ -1,7 +1,7 @@
 
 #include "includes.h"
 
-int init_rt_mvs_thread(int prio, void* data, int endcmd) {
+int init_rt_mvs_thread(int prio, void* data) {
 
     struct sched_param param;
     pthread_attr_t attr;

@@ -10,7 +10,7 @@
 #define R3
 
 static long sock;
-extern int endcmd;
+int endcmd = 0;
 static std::string userinput;
 extern STEPS recv_msgs;
 
@@ -102,43 +102,108 @@ int main()
 #endif
 
     char var;
-    std::cout << "Bitte Enter drücken um fortzufahren." << std::endl;
+    std::cout << "Bitte a + Enter drücken um fortzufahren." << std::endl;
     std::cin >> var;
-    std::cout << "Bin hier" << std::endl;
 
-    // Definieren einer Zielposition
-    POSE* ziel = new(POSE);
-    ziel->w.x = 150.01f;
-    ziel->w.y = 250.02f;
-    ziel->w.z = 200.03f;
+    // Definieren eines Vektors bestehend aus den einzelnen Zielpositionen
+    std::vector<POSE> ziel;
+
+    POSE ziel1;
+    ziel1.w.x = 100.0f;
+    ziel1.w.y = 200.0f;
+    ziel1.w.z = 60.0f;
+    ziel.push_back(ziel1);
+
+    POSE ziel2;
+    ziel2.w.x = 100.0f;
+    ziel2.w.y = 200.0f;
+    ziel2.w.z = 70.0f;
+    ziel.push_back(ziel2);
+
+    POSE ziel3;
+    ziel3.w.x = 100.0f;
+    ziel3.w.y = 200.0f;
+    ziel3.w.z = 80.0f;
+    ziel.push_back(ziel3);
+
+    POSE ziel4;
+    ziel4.w.x = 100.0f;
+    ziel4.w.y = 200.0f;
+    ziel4.w.z = 90.0f;
+    ziel.push_back(ziel4);
+
+    POSE ziel5;
+    ziel5.w.x = 100.0f;
+    ziel5.w.y = 200.0f;
+    ziel5.w.z = 100.0f;
+    ziel.push_back(ziel5);
+
+    POSE ziel6;
+    ziel6.w.x = 100.0f;
+    ziel6.w.y = 200.0f;
+    ziel6.w.z = 110.0f;
+    ziel.push_back(ziel6);
+
+    POSE ziel7;
+    ziel7.w.x = 100.0f;
+    ziel7.w.y = 200.0f;
+    ziel7.w.z = 120.0f;
+    ziel.push_back(ziel7);
+
+    POSE ziel8;
+    ziel8.w.x = 100.0f;
+    ziel8.w.y = 200.0f;
+    ziel8.w.z = 130.0f;
+    ziel.push_back(ziel8);
+
+    POSE ziel9;
+    ziel9.w.x = 100.0f;
+    ziel9.w.y = 200.0f;
+    ziel9.w.z = 140.0f;
+    ziel.push_back(ziel9);
+
+    POSE ziel10;
+    ziel10.w.x = 100.0f;
+    ziel10.w.y = 200.0f;
+    ziel10.w.z = 150.0f;
+    ziel.push_back(ziel10);
+
+    POSE ziel11;
+    ziel11.w.x = 101.0f;
+    ziel11.w.y = 201.0f;
+    ziel11.w.z = 160.0f;
+    ziel.push_back(ziel11);
+
     mxt_init();
-    void* data = (void*)ziel;
-    init_rt_mvs_thread(80, data, endcmd);
+    void* data = &ziel;
 
-    std::cout << "1. Element von x: " << recv_msgs.x.at(0) << std::endl;
-    matplotlibcpp::subplot(3,1,1);
-    matplotlibcpp::plot(recv_msgs.t, recv_msgs.x);
-    matplotlibcpp::title("Gefahrene Wegstrcke in x-Richtung");
-    //matplotlibcpp::xlabel("Zeit t [s]");
-    matplotlibcpp::ylabel("x in [mm]");
-    matplotlibcpp::subplot(3,1,2);
-    matplotlibcpp::plot(recv_msgs.t, recv_msgs.y);
-    matplotlibcpp::title("Gefahrene Wegstrcke in y-Richtung");
-    //matplotlibcpp::xlabel("Zeit t [s]");
-    matplotlibcpp::ylabel("y in [mm]");
-    matplotlibcpp::subplot(3,1,3);
+    int status = init_rt_mvs_thread(80, data);
+
+
+//    matplotlibcpp::subplot(3,1,1);
+//    matplotlibcpp::plot(recv_msgs.t, recv_msgs.x);
+//    matplotlibcpp::title("Gefahrene Wegstrecke in x-Richtung");
+//    //matplotlibcpp::xlabel("Zeit t [s]");
+//    matplotlibcpp::ylabel("x in [mm]");
+//    matplotlibcpp::subplot(3,1,2);
+//    matplotlibcpp::plot(recv_msgs.t, recv_msgs.y);
+//    matplotlibcpp::title("Gefahrene Wegstrecke in y-Richtung");
+//    //matplotlibcpp::xlabel("Zeit t [s]");
+//    matplotlibcpp::ylabel("y in [mm]");
+//    matplotlibcpp::subplot(3,1,3);
     matplotlibcpp::plot(recv_msgs.t, recv_msgs.z);
-    matplotlibcpp::title("Gefahrene Wegstrcke in z-Richtung");
+    matplotlibcpp::title("Gefahrene Wegstrecke in z-Richtung");
     matplotlibcpp::xlabel("Zeit t [s]");
     matplotlibcpp::ylabel("z in [mm]");
     //matplotlibcpp::legend();
-    //matplotlibcpp::save("/home/pi/Desktop/results.png");
+    std::cout << "ENDE" << std::endl;
+    matplotlibcpp::save("/home/pi/Desktop/results.png");
     matplotlibcpp::show();
 
     while(!endcmd) {
 
     };
 
-    return 0;
+    return status;
 }
 
