@@ -5,9 +5,12 @@
  */
 
 #include <includes.h>
-#include "matplotlibcpp.h"
 
 #define R3
+
+#ifdef PLOTS
+#include "matplotlibcpp.h"
+#endif
 
 static long sock;
 int endcmd = 0;
@@ -31,6 +34,25 @@ int main()
     // STRG+C abfangen
     signal(SIGINT, endprg);
 
+    ifstream gcode_file;
+    string filename;
+    std::cout << "Please enter the filename: ";
+    std::cin >> filename;
+    gcode_file.open(filename);
+    if(!gcode_file.is_open()){
+        std::cout << "File could not be opened." << std::endl;
+        return -1;
+    }
+    vector<GCode> vec_gcode;
+    string line;
+
+    while(getline(gcode_file, line)){
+        GCode gcode{};
+        (std::istringstream) line >> gcode;
+        vec_gcode.push_back(gcode);
+    }
+
+    std::cout << "Read " << vec_gcode.size() << " lines of G-Code." << std::endl;
     std::cout << " ------ Programmabbruch mit STRG+C -------" << std::endl << std::endl;
 
 #ifdef R3
@@ -179,7 +201,7 @@ int main()
 
     int status = init_rt_mvs_thread(80, data);
 
-
+#ifdef PLOTS
 //    matplotlibcpp::subplot(3,1,1);
 //    matplotlibcpp::plot(recv_msgs.t, recv_msgs.x);
 //    matplotlibcpp::title("Gefahrene Wegstrecke in x-Richtung");
@@ -199,6 +221,7 @@ int main()
     std::cout << "ENDE" << std::endl;
     matplotlibcpp::save("/home/pi/Desktop/results.png");
     matplotlibcpp::show();
+#endif
 
     while(!endcmd) {
 

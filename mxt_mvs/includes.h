@@ -6,25 +6,27 @@
 
 // Globale Headers
 #include <iostream>
-#include <stdio.h>
+#include <cstdio>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <resolv.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/select.h>
-#include <string.h>
-#include <math.h>
+#include <cstring>
+#include <cmath>
 #include <pthread.h>
 #include <sched.h>
-#include <errno.h>
-#include <time.h>
-#include <assert.h>
+#include <cerrno>
+#include <ctime>
+#include <cassert>
 #include <sys/mman.h>
-#include <limits.h>
+#include <climits>
 #include <chrono>
 #include <vector>
 #include "unistd.h"
+#include <fstream>
+#include <sstream>
 
 // Eigene Headers
 #include "strdef.h"

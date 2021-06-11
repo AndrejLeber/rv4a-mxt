@@ -2,6 +2,7 @@
 
 // Python headers must be included before any system headers, since
 // they define _POSIX_C_SOURCE
+#ifdef PLOTS
 #include <Python.h>
 
 #include <vector>
@@ -2983,4 +2984,7 @@ private:
     PyObject* set_data_fct = nullptr;
 };
 
+
+
 } // end namespace matplotlibcpp
+#endif

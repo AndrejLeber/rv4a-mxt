@@ -3,7 +3,7 @@
 
 int init_rt_mvs_thread(int prio, void* data) {
 
-    struct sched_param param;
+    struct sched_param param{};
     pthread_attr_t attr;
     pthread_t t1;
     int ret;
