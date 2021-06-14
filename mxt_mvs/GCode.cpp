@@ -11,7 +11,15 @@
  * Overload the output operator for poses
  */
 ostream& operator<<(ostream& os, const Point3D& point){
-    //os << "X" << point.x << " Y" << point.y << " Z" << point.z;
+    if(point.x.has_value()) {
+         os << "X" << point.x.value();
+    }
+    if(point.y.has_value()) {
+         os << "Y" << point.y.value();
+    }
+    if(point.z.has_value()) {
+         os << "Z" << point.z.value();
+    }
     return os;
 }
 
@@ -23,17 +31,17 @@ ostream& operator<<(ostream& os, const GCode& gcode){
 }
 
 bool GCode::can_extrude() const{
-    std::vector<std::string> extr_enabled{"G1", "G2", "G3"};
+    std::vector<std::string> extr_enabled{"G1", "G2", "G3", "G01", "G02", "G03"};
     return std::find(extr_enabled.begin(), extr_enabled.end(), GCode::command_id) != extr_enabled.end();
 }
 
 bool GCode::can_mv_pose() const{
-    std::vector<std::string> mv_enabled{"G0", "G1", "G2", "G3"};
+    std::vector<std::string> mv_enabled{"G0", "G1", "G2", "G3", "G01", "G02", "G03"};
     return std::find(mv_enabled.begin(), mv_enabled.end(), GCode::command_id) != mv_enabled.end();
 }
 
 bool GCode::is_circular() const{
-    std::vector<std::string> is_circular{"G2", "G3"};
+    std::vector<std::string> is_circular{"G2", "G3", "G02", "G03"};
     return std::find(is_circular.begin(), is_circular.end(), GCode::command_id) != is_circular.end();
 }
 
@@ -88,7 +96,7 @@ istream& operator>>(istream& is, GCode& gcode){
 
         // Remove leading zeros from command number
         command_number = word.substr(1, word.size() - 1);
-        command_number.erase(0, command_number.find_first_not_of('0'));
+        //command_number.erase(0, command_number.find_first_not_of('0'));
         gcode.command_id = word.at(0) + command_number;
 
         // Classify into groups of commands

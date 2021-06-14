@@ -36,5 +36,6 @@
 #include "r3_protocol.h"
 #include "matplotlibcpp.h"
 #include "GCode.h"
+#include "serial.h"
 
 #endif // INCLUDES_H

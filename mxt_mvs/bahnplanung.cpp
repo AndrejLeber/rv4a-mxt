@@ -67,7 +67,7 @@ STEPS Sinoide(POSE start, POSE target, float speed, float acc){
         if (vm[i]>sqrt((se[i]*bm[i]/2))) // Prüfung ob vm höher ist als vm,max
         {
             vm[i]=sqrt((se[i]*bm[i]/2)); // vm auf vm,max setzen
-            cout << "Programmierte Geschwindigkeit wird nicht erreicht" << endl;
+            //cout << "Programmierte Geschwindigkeit wird nicht erreicht" << endl;
         }
 
         if (bm[i] != 0) {
@@ -101,7 +101,7 @@ STEPS Sinoide(POSE start, POSE target, float speed, float acc){
     float b = te_m/tipo;
     int a=floor(b); // Berechnen der notwendig Anzahl an Stützstellen
 
-    for (int i=0; i<a;i++) // t-Vektor füllen mit Zeiten... 0, 0.1, 0.2 ,....
+    for (int i=1; i<a;i++) // t-Vektor füllen mit Zeiten... 0, 0.1, 0.2 ,....
     {
         time_steps.push_back(i*tipo);
     }

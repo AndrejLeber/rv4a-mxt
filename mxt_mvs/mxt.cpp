@@ -168,30 +168,91 @@ void* mxt_mvs_pos(void* data)
     start = mxt_recv.dat.pos;
 
     // Zielposition(en) der Move_Sinoide-Funktion
-    std::vector<POSE> *ziel = (std::vector<POSE>*)data;
+    std::vector<GCode> *vec_gcode = (std::vector<GCode>*)data;
 
     std::vector<POSE> stuetzstellen;
+    std::vector<float> v_stuetz;
+
+
 
     stuetzstellen.push_back(start);
     std::cout << "Beginne bei Position: x = " << stuetzstellen.at(0).w.x << "; y = " << stuetzstellen.at(0).w.y <<
                  "; z = " << stuetzstellen.at(0).w.z << std::endl;
-    for (unsigned int i = 0; i < ziel->size(); i++) {
-        stuetzstellen.push_back(ziel->at(i));
-        std::cout << "Fahre zu Position "<< i+1 << ": x = " << stuetzstellen.at(i+1).w.x << "; y = " << stuetzstellen.at(i+1).w.y <<
-                     "; z = " << stuetzstellen.at(i+1).w.z << std::endl;
-    }
+    for (unsigned int i = 0; i < vec_gcode->size(); i++) {
+        if((vec_gcode->at(i).command_id == "G01") || (vec_gcode->at(i).command_id == "G1") ||
+           (vec_gcode->at(i).command_id == "G00") || (vec_gcode->at(i).command_id == "G0")){
+            // Linear fahren
+            POSE target_curr;
+            float v_curr;
 
-    // Bewegung über Move_Sinoide-Funktion zu der (den) Zielposition(en)
-    int moveit = 0;
+            if(vec_gcode->at(i).feedrate.has_value()) {
+                v_curr = vec_gcode->at(i).feedrate.value()/60.0f;
+            }
+            else if (v_stuetz.size() != 0) {
+                v_curr = v_stuetz.back();
+            }
+            else {
+                v_curr = 50.0f;
+            }
 
-    std::cout << "Anzahl der berechneten Fahrpukte: " << stuetzstellen.size()-1 << std::endl;
+            v_stuetz.push_back(v_curr);
+            target_curr.w.x = vec_gcode->at(i).pose.x.value_or(stuetzstellen.back().w.x);
+            target_curr.w.y = vec_gcode->at(i).pose.y.value_or(stuetzstellen.back().w.y);
+            target_curr.w.z = vec_gcode->at(i).pose.z.value_or(stuetzstellen.back().w.z);
+            stuetzstellen.push_back(target_curr);
 
-    for (unsigned int i = 0; i < stuetzstellen.size()-1; i++) {
-        start = mxt_recv.dat.pos;
-        start.w.x = stuetzstellen.at(i).w.x;
-        start.w.y = stuetzstellen.at(i).w.y;
-        start.w.z = stuetzstellen.at(i).w.z;
-        moveit = move_sinoide(mxt_send, mxt_recv, start, &stuetzstellen.at(i+1), 50.0f, 2000.0f);
+            std::cout << "Aktueller Befehl Nr. " << i << ": " << vec_gcode->at(i).text << std::endl;
+            std::cout << "Fahre zu Position "<< i+1 << ": x = " << stuetzstellen.back().w.x << "; y = " << stuetzstellen.back().w.y <<
+                         "; z = " << stuetzstellen.back().w.z << std::endl;
+
+            // Bewegung über Move_Sinoide-Funktion zu der (den) Zielposition(en)
+            int moveit = 0;
+
+            start = mxt_recv.dat.pos;
+            start.w.x = stuetzstellen.at(stuetzstellen.size()-2).w.x;
+            start.w.y = stuetzstellen.at(stuetzstellen.size()-2).w.y;
+            start.w.z = stuetzstellen.at(stuetzstellen.size()-2).w.z;
+            moveit = move_sinoide(mxt_send, mxt_recv, start, &target_curr, v_stuetz.back(), 500.0f);
+
+        }
+        else if((vec_gcode->at(i).command_id == "G02") || vec_gcode->at(i).command_id == "G2"){
+            // Kreisbahn
+        }
+        else if((vec_gcode->at(i).command_id == "G03") || vec_gcode->at(i).command_id == "G3"){
+            // Kreisbahn
+        }
+        else if((vec_gcode->at(i).command_id == "G28")){
+            // Homing
+            POSE ziel;
+            if(vec_gcode->at(i).homing_axes.find('X') != string::npos){
+                // X-Achse homen
+                ziel.w.x = 0.0f;
+            }
+            else{
+                ziel.w.x = stuetzstellen.back().w.x;
+            }
+            if(vec_gcode->at(i).homing_axes.find('Y') != string::npos){
+                // Y-Achse homen
+                ziel.w.y = 0.0f;
+            }
+            else{
+                ziel.w.y = stuetzstellen.back().w.y;
+            }
+            if(vec_gcode->at(i).homing_axes.find('Z') != string::npos){
+                // Z-Achse homen
+                ziel.w.z = 0.0f;
+            }
+            else{
+                ziel.w.z = stuetzstellen.back().w.z;
+            }
+            stuetzstellen.push_back(ziel);
+
+            start = mxt_recv.dat.pos;
+            start.w.x = stuetzstellen.at(stuetzstellen.size()-2).w.x;
+            start.w.y = stuetzstellen.at(stuetzstellen.size()-2).w.y;
+            start.w.z = stuetzstellen.at(stuetzstellen.size()-2).w.z;
+            move_sinoide(mxt_send, mxt_recv, start, &ziel, v_stuetz.back(), 500.0f);
+        }
     }
     return nullptr;
 }

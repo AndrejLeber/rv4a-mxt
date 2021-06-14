@@ -1,7 +1,9 @@
+QT += serialport
+
 TEMPLATE = app
-CONFIG += console c++1z
-CONFIG -= app_bundle
-CONFIG -= qt
+CONFIG += c++1z console
+#CONFIG -= app_bundle
+#CONFIG -= qt
 
 SOURCES += \
     main.cpp \
@@ -9,7 +11,8 @@ SOURCES += \
     rt.cpp \
     bahnplanung.cpp \
     r3_protocol.cpp \
-    GCode.cpp
+    GCode.cpp \
+    serial.cpp
 
 LIBS += \
     -lpthread
@@ -24,4 +27,5 @@ HEADERS += \
     bahnplanung.h \
     r3_protocol.h \
     matplotlibcpp.h \
-    GCode.h
+    GCode.h \
+    serial.h
