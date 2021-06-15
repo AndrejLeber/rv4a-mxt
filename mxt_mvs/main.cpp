@@ -1,55 +1,62 @@
 /*-------------------- MVS-Funktion mit Echtzeitthread-------------------*/
 
-/* Wichtiger Hinweis: Als Vorlage für dieses Programm wurde der Code von Jürgen Palczynski
- * aus seiner Diplomarbeit übernommen und an einigen stellen modifiziert / optimiert
- */
+// Entwickler: Romina Gänsler, Johannes Allert, Patrick Bertsch, Andrej Leber
+// Letztes Revisionsdatum: 15.06.21
 
 #include <includes.h>
 
 #define R3
+#define PLOTS
 
 #ifdef PLOTS
 #include "matplotlibcpp.h"
 #endif
+
+QSerialPort *serial;
 
 static long sock;
 int endcmd = 0;
 static std::string userinput;
 extern STEPS recv_msgs;
 
-
 // Programmabbruch mit STRG+C
-void endprg(int dummy) {
+[[noreturn]] void endprg(int dummy) {
     dummy += dummy;
     endcmd = 1;
     std::cout << "\n\nEnding program...\n\n" << std::endl;
     stop_robot(sock);
     usleep(1e4);
     close(sock);
-    usleep(1e6);
+    disconnect_serial();
+    usleep(5e5);
     exit(-1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    QCoreApplication a(argc, argv);
+
     // STRG+C abfangen
     signal(SIGINT, endprg);
+    std::cout << " ------ Aborting program with STRG+C -------" << std::endl << std::endl;
 
-//    init_serial("/dev/ttyACM0", 115200);
-//    bool status = connect_serial();
-//    send_message("M106 S255");
-//    std::cout << "Bitte Taste drücken, um Lüfter auszuschalten" << std::endl;
-//    string input;
-//    cin >> input;
-//    if (input != "") {
-//        send_message("M107");
-//    }
+    // Initialisieren der seriellen Kommunikation mit der Heizplatine
+    serial = new QSerialPort();
+    Serial_receiver sr;
 
+    init_serial("/dev/ttyACM0", 115200);
+
+    if(connect_serial() == 1) {
+        sr.connect_readyread();
+    }
+
+    // Einlesen und parsen der G-Code Datei
     ifstream gcode_file;
     string filename;
-    std::cout << "Please enter the filename: ";
+    std::cout << "Please enter the full path and filename of the desired GCode- File: ";
     //std::cin >> filename;
     filename = "/home/pi/Desktop/test2.gcode";
+    std::cout << filename << " will be used." << std::endl;
     gcode_file.open(filename);
     if(!gcode_file.is_open()){
         std::cout << "File could not be opened." << std::endl;
@@ -60,26 +67,24 @@ int main()
 
     while(getline(gcode_file, line)){
         GCode gcode{};
-        (std::istringstream) line >> gcode;
+        static_cast<std::istringstream>(line) >> gcode;
         if (gcode.command_id.size() > 0) {
             vec_gcode.push_back(gcode);
         }
     }
 
-    std::cout << "Read " << vec_gcode.size() << " lines of G-Code." << std::endl;
-    std::cout << " ------ Programmabbruch mit STRG+C -------" << std::endl << std::endl;
+    std::cout << "Reading " << vec_gcode.size() << " lines of G-Code completed." << std::endl;
 
 #ifdef R3
     // Aufbau einer Verbindung über R3 und Einschalten der Servors
     sock = open_connection("192.168.0.1", 10002);
     start_robot(sock);
 
-    std::cout << "Zum Start eines Programms bitte Programmnr. eingeben und mit ENTER bestätigen." << std::endl;
+    std::cout << "To start the robot program, please type in a program number and press ENTER." << std::endl;
     std::cin >> userinput;
 
     std::string load_prg_with_number = CMD_PRG_LOAD + userinput;
-    std::cout << "Programm " << userinput << " wird geladen und ausgeführt..." << std::endl;
-    std::cout << "Befehl: " << load_prg_with_number << std::endl;
+    std::cout << "Program Nr." << userinput << " will be loaded and executed ..." << std::endl;
     send_command(sock, CMD_PRG_RESET);
     send_command(sock, load_prg_with_number);
     usleep(1e6);
@@ -87,39 +92,34 @@ int main()
 #endif
 
     char var;
-    std::cout << "Bitte a + Enter drücken um fortzufahren." << std::endl;
+    std::cout << "Press any key + ENTER to continue starting MXT realtime communication." << std::endl;
     std::cin >> var;
 
     mxt_init();
     void* data = &vec_gcode;
 
-    int status = init_rt_mvs_thread(80, data);
 
-//    matplotlibcpp::subplot(3,1,1);
-//    matplotlibcpp::plot(recv_msgs.t, recv_msgs.x);
-//    matplotlibcpp::title("Gefahrene Wegstrecke in x-Richtung");
-//    //matplotlibcpp::xlabel("Zeit t [s]");
-//    matplotlibcpp::ylabel("x in [mm]");
-//    matplotlibcpp::subplot(3,1,2);
-//    matplotlibcpp::plot(recv_msgs.t, recv_msgs.y);
-//    matplotlibcpp::title("Gefahrene Wegstrecke in y-Richtung");
-//    //matplotlibcpp::xlabel("Zeit t [s]");
-//    matplotlibcpp::ylabel("y in [mm]");
-//    matplotlibcpp::subplot(3,1,3);
+    init_rt_mvs_thread(80, data);
 
+    matplotlibcpp::subplot(3,1,1);
+    matplotlibcpp::plot(recv_msgs.t, recv_msgs.x);
+    matplotlibcpp::title("Gefahrene Wegstrecke in x-Richtung");
+    matplotlibcpp::ylabel("x in [mm]");
+
+    matplotlibcpp::subplot(3,1,2);
+    matplotlibcpp::plot(recv_msgs.t, recv_msgs.y);
+    matplotlibcpp::title("Gefahrene Wegstrecke in y-Richtung");
+    matplotlibcpp::ylabel("y in [mm]");
+
+    matplotlibcpp::subplot(3,1,3);
     matplotlibcpp::plot(recv_msgs.t, recv_msgs.z, ".");
     matplotlibcpp::title("Gefahrene Wegstrecke in z-Richtung");
     matplotlibcpp::xlabel("Zeit t [s]");
     matplotlibcpp::ylabel("z in [mm]");
-    //matplotlibcpp::legend();
-    std::cout << "ENDE" << std::endl;
+    std::cout << "End of program." << std::endl;
     matplotlibcpp::save("/home/pi/Desktop/results.png");
     matplotlibcpp::show();
 
-    while(!endcmd) {
-
-    };
-
-    return 0;
+    return a.exec();
 }
 

@@ -53,8 +53,8 @@ int open_connection(const std::string &host, unsigned int port) {
 //}
 
 int send_command(long sock, std::string cmd) {
-        send(sock, (void*)cmd.c_str(), sizeof (cmd), 0);
-        return 0;
+    send(sock, (void*)cmd.c_str(), sizeof (cmd), 0);
+    return 0;
 }
 
 int receive_response(long sock, std::string &response) {

@@ -5,10 +5,6 @@
 #include <QtSerialPort/QSerialPort>
 
 extern QSerialPort *serial;
-extern QSerialPort *reviever;
-
-extern QByteArray serialData;
-extern QString serialBuffer;
 
 void init_serial(std::string port, int baudrate);
 
@@ -16,9 +12,9 @@ int connect_serial();
 
 void disconnect_serial();
 
-void send_message(std::string msg);
+void serial_send(std::string msg);
 
-void recv_messages();
+void serial_heating_hotend (int temp);
 
 #endif // SERIAL_H
 

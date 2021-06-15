@@ -168,7 +168,7 @@ void* mxt_mvs_pos(void* data)
     start = mxt_recv.dat.pos;
 
     // Zielposition(en) der Move_Sinoide-Funktion
-    std::vector<GCode> *vec_gcode = (std::vector<GCode>*)data;
+    std::vector<GCode> *vec_gcode = static_cast<std::vector<GCode>*>(data);
 
     std::vector<POSE> stuetzstellen;
     std::vector<float> v_stuetz;
@@ -180,7 +180,7 @@ void* mxt_mvs_pos(void* data)
                  "; z = " << stuetzstellen.at(0).w.z << std::endl;
     for (unsigned int i = 0; i < vec_gcode->size(); i++) {
         if((vec_gcode->at(i).command_id == "G01") || (vec_gcode->at(i).command_id == "G1") ||
-           (vec_gcode->at(i).command_id == "G00") || (vec_gcode->at(i).command_id == "G0")){
+                (vec_gcode->at(i).command_id == "G00") || (vec_gcode->at(i).command_id == "G0")){
             // Linear fahren
             POSE target_curr;
             float v_curr;
@@ -214,12 +214,18 @@ void* mxt_mvs_pos(void* data)
             start.w.z = stuetzstellen.at(stuetzstellen.size()-2).w.z;
             moveit = move_sinoide(mxt_send, mxt_recv, start, &target_curr, v_stuetz.back(), 500.0f);
 
+            if (moveit) {
+                std::cout << "Befehl erfolgreich ausgeführt." << std::endl;
+            }
+
         }
         else if((vec_gcode->at(i).command_id == "G02") || vec_gcode->at(i).command_id == "G2"){
             // Kreisbahn
+            std::cout << "Command not implemented at the moment." << std::endl;
         }
         else if((vec_gcode->at(i).command_id == "G03") || vec_gcode->at(i).command_id == "G3"){
             // Kreisbahn
+            std::cout << "Command not implemented at the moment." << std::endl;
         }
         else if((vec_gcode->at(i).command_id == "G28")){
             // Homing
@@ -374,10 +380,10 @@ int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed)
 int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, POSE* ziel, float v, float a) {
     STEPS path = Sinoide(start, *ziel, v, a);
 
-//    for (unsigned int i = 0; i < path.x.size(); i++) {
-//        std::cout << "x" << i << " = " << path.x.at(i) << "mm,  y" << i << " = " << path.y.at(i)
-//                  << "mm,  z" << i << " = " << path.z.at(i) << "mm" << std::endl;
-//    }
+    //    for (unsigned int i = 0; i < path.x.size(); i++) {
+    //        std::cout << "x" << i << " = " << path.x.at(i) << "mm,  y" << i << " = " << path.y.at(i)
+    //                  << "mm,  z" << i << " = " << path.z.at(i) << "mm" << std::endl;
+    //    }
 
     // Konfigurieren der MXT-Bewegung
     send_sinoide = mxt_prep_move_pos(start);
@@ -443,6 +449,6 @@ int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, POSE* zie
 
 
     }
-    return 0;
+    return 1;
 }
 

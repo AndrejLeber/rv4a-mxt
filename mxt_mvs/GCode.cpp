@@ -12,13 +12,13 @@
  */
 ostream& operator<<(ostream& os, const Point3D& point){
     if(point.x.has_value()) {
-         os << "X" << point.x.value();
+        os << "X" << point.x.value();
     }
     if(point.y.has_value()) {
-         os << "Y" << point.y.value();
+        os << "Y" << point.y.value();
     }
     if(point.z.has_value()) {
-         os << "Z" << point.z.value();
+        os << "Z" << point.z.value();
     }
     return os;
 }

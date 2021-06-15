@@ -27,6 +27,13 @@
 #include "unistd.h"
 #include <fstream>
 #include <sstream>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <QCoreApplication>
+#include <QtSerialPort/QSerialPort>
+#include <QDebug>
+#include <QThread>
 
 // Eigene Headers
 #include "strdef.h"
@@ -37,5 +44,6 @@
 #include "matplotlibcpp.h"
 #include "GCode.h"
 #include "serial.h"
+#include <serial_receiver.h>
 
 #endif // INCLUDES_H
