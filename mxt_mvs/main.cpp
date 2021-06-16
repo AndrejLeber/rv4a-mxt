@@ -92,7 +92,7 @@ int main()
     while(getline(gcode_file, line)){
         GCode gcode{};
         static_cast<std::istringstream>(line) >> gcode;
-        if (gcode.command_id.size() > 0) {
+        if (!gcode.command_id.empty()) {
             vec_gcode.push_back(gcode);
         }
     }

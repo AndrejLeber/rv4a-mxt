@@ -127,7 +127,7 @@ void *mxt_recv_pos(void* data)
         counter++;
         auto end = std::chrono::steady_clock::now();
 
-        std::cout << "Elapsed time in milliseconds: " << std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000.0 << std::endl;
+        std::cout << "Elapsed time in milliseconds: " << std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000 << std::endl;
     }
 
     return data;
@@ -168,7 +168,7 @@ void* mxt_mvs_pos(void* data)
     start = mxt_recv.dat.pos;
 
     // Zielposition(en) der Move_Sinoide-Funktion
-    std::vector<GCode> *vec_gcode = static_cast<std::vector<GCode>*>(data);
+    auto *vec_gcode = static_cast<std::vector<GCode>*>(data);
 
     std::vector<POSE> stuetzstellen;
     std::vector<float> v_stuetz;
@@ -188,7 +188,7 @@ void* mxt_mvs_pos(void* data)
             if(vec_gcode->at(i).feedrate.has_value()) {
                 v_curr = vec_gcode->at(i).feedrate.value()/60.0f;
             }
-            else if (v_stuetz.size() != 0) {
+            else if (!v_stuetz.empty()) {
                 v_curr = v_stuetz.back();
             }
             else {
@@ -324,7 +324,7 @@ int mvs(MXTCMD &mxt_send, MXTCMD &mxt_recv, POSE start, POSE* ziel, float speed)
     //printf("%i %i", mxt_send.Command, mxt_send.SendType);
 
     // Zeitmessung
-    struct timespec ts0, ts1, ts2;
+    struct timespec ts0{}, ts1{}, ts2{};
     clock_gettime(CLOCK_MONOTONIC,&ts0);
 
     // Vorbereiten zum Senden

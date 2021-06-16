@@ -3,12 +3,9 @@
 //
 
 #include "bahnplanung.h"
-#include "strdef.h"
 #include "cmath"
 #include "vector"
-#include <iostream>
 #include <algorithm>
-#include <string>
 
 using namespace std;
 
@@ -120,7 +117,7 @@ STEPS Sinoide(POSE start, POSE target, float speed, float acc){
         }
         else if (time_step < tv_m) //konstante Geschwindigkeit
         {
-            temp = time_step-0.5*tb_m;
+            temp = time_step-0.5f*tb_m;
             Stuetz.x.push_back(start.w.x+dir[0]*vm[0]*temp);
             Stuetz.y.push_back(start.w.y+dir[1]*vm[1]*temp);
             Stuetz.z.push_back(start.w.z+dir[2]*vm[2]*temp);
@@ -142,7 +139,7 @@ STEPS Sinoide(POSE start, POSE target, float speed, float acc){
         Stuetz.y.push_back(target.w.y);
         Stuetz.z.push_back(target.w.z);
         Stuetz.t.push_back(time_steps[time_steps.size()-1]+tipo);
-        if (time_steps.size()==0) {
+        if (time_steps.empty()) {
             Stuetz.t.push_back(tipo);
         }
         else {
