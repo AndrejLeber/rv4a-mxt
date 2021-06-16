@@ -178,15 +178,17 @@ void* mxt_mvs_pos(void* data)
     stuetzstellen.push_back(start);
     std::cout << "Beginne bei Position: x = " << stuetzstellen.at(0).w.x << "; y = " << stuetzstellen.at(0).w.y <<
                  "; z = " << stuetzstellen.at(0).w.z << std::endl;
-    for (unsigned int i = 0; i < vec_gcode->size(); i++) {
-        if((vec_gcode->at(i).command_id == "G01") || (vec_gcode->at(i).command_id == "G1") ||
-                (vec_gcode->at(i).command_id == "G00") || (vec_gcode->at(i).command_id == "G0")){
+
+    unsigned int i = 0;
+    for (auto gcode = vec_gcode->begin(); gcode != vec_gcode->begin(); gcode++, i++) {
+        if((gcode->command_id == "G01") || (gcode->command_id == "G1") ||
+                (gcode->command_id == "G00") || (gcode->command_id == "G0")){
             // Linear fahren
             POSE target_curr;
             float v_curr;
 
-            if(vec_gcode->at(i).feedrate.has_value()) {
-                v_curr = vec_gcode->at(i).feedrate.value()/60.0f;
+            if(gcode->feedrate.has_value()) {
+                v_curr = gcode->feedrate.value()/60.0f;
             }
             else if (!v_stuetz.empty()) {
                 v_curr = v_stuetz.back();
@@ -196,12 +198,12 @@ void* mxt_mvs_pos(void* data)
             }
 
             v_stuetz.push_back(v_curr);
-            target_curr.w.x = vec_gcode->at(i).pose.x.value_or(stuetzstellen.back().w.x);
-            target_curr.w.y = vec_gcode->at(i).pose.y.value_or(stuetzstellen.back().w.y);
-            target_curr.w.z = vec_gcode->at(i).pose.z.value_or(stuetzstellen.back().w.z);
+            target_curr.w.x = gcode->pose.x.value_or(stuetzstellen.back().w.x);
+            target_curr.w.y = gcode->pose.y.value_or(stuetzstellen.back().w.y);
+            target_curr.w.z = gcode->pose.z.value_or(stuetzstellen.back().w.z);
             stuetzstellen.push_back(target_curr);
 
-            std::cout << "Aktueller Befehl Nr. " << i << ": " << vec_gcode->at(i).text << std::endl;
+            std::cout << "Aktueller Befehl Nr. " << i << ": " << gcode->text << std::endl;
             std::cout << "Fahre zu Position "<< i+1 << ": x = " << stuetzstellen.back().w.x << "; y = " << stuetzstellen.back().w.y <<
                          "; z = " << stuetzstellen.back().w.z << std::endl;
 
@@ -219,32 +221,32 @@ void* mxt_mvs_pos(void* data)
             }
 
         }
-        else if((vec_gcode->at(i).command_id == "G02") || vec_gcode->at(i).command_id == "G2"){
+        else if((gcode->command_id == "G02") || gcode->command_id == "G2"){
             // Kreisbahn
             std::cout << "Command not implemented at the moment." << std::endl;
         }
-        else if((vec_gcode->at(i).command_id == "G03") || vec_gcode->at(i).command_id == "G3"){
+        else if((gcode->command_id == "G03") || gcode->command_id == "G3"){
             // Kreisbahn
             std::cout << "Command not implemented at the moment." << std::endl;
         }
-        else if((vec_gcode->at(i).command_id == "G28")){
+        else if((gcode->command_id == "G28")){
             // Homing
             POSE ziel;
-            if(vec_gcode->at(i).homing_axes.find('X') != string::npos){
+            if(gcode->homing_axes.find('X') != string::npos){
                 // X-Achse homen
                 ziel.w.x = 0.0f;
             }
             else{
                 ziel.w.x = stuetzstellen.back().w.x;
             }
-            if(vec_gcode->at(i).homing_axes.find('Y') != string::npos){
+            if(gcode->homing_axes.find('Y') != string::npos){
                 // Y-Achse homen
                 ziel.w.y = 0.0f;
             }
             else{
                 ziel.w.y = stuetzstellen.back().w.y;
             }
-            if(vec_gcode->at(i).homing_axes.find('Z') != string::npos){
+            if(gcode->homing_axes.find('Z') != string::npos){
                 // Z-Achse homen
                 ziel.w.z = 0.0f;
             }

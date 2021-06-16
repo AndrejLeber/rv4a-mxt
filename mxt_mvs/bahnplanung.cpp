@@ -138,7 +138,7 @@ STEPS Sinoide(POSE start, POSE target, float speed, float acc){
         Stuetz.x.push_back(target.w.x);
         Stuetz.y.push_back(target.w.y);
         Stuetz.z.push_back(target.w.z);
-        Stuetz.t.push_back(time_steps[time_steps.size()-1]+tipo);
+
         if (time_steps.empty()) {
             Stuetz.t.push_back(tipo);
         }
