@@ -12,7 +12,7 @@ Serial_receiver::Serial_receiver()
 }
 
 void Serial_receiver::connect_readyread() {
-    connect(serial, SIGNAL(readyRead()), this, SLOT(serial_recv()));
+    connect(serial, &QSerialPort::readyRead, this, &Serial_receiver::serial_recv);
     std::cout << "Signal readyRead() is now connected." << std::endl;
 }
 

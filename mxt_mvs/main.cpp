@@ -32,23 +32,47 @@ extern STEPS recv_msgs;
     exit(-1);
 }
 
-int main(int argc, char *argv[])
+int main()
 {
-    QCoreApplication a(argc, argv);
-
     // STRG+C abfangen
     signal(SIGINT, endprg);
     std::cout << " ------ Aborting program with STRG+C -------" << std::endl << std::endl;
 
     // Initialisieren der seriellen Kommunikation mit der Heizplatine
     serial = new QSerialPort();
-    Serial_receiver sr;
-
     init_serial("/dev/ttyACM0", 115200);
 
-    if(connect_serial() == 1) {
-        sr.connect_readyread();
-    }
+//    if(connect_serial() == 1) {
+
+//        QThread::msleep(1000);
+//        serial_send("M105");
+//        serial_receive();
+//        QThread::msleep(2000);
+//        serial_send("M106 S255");
+//        serial_receive();
+//        QThread::msleep(2000);
+//        serial_send("M107");
+//        serial_receive();
+//        QThread::msleep(2000);
+//        serial_send("M105");
+//        serial_receive();
+//        QThread::msleep(2000);
+//        serial_send("M105");
+//        serial_receive();
+//        QThread::msleep(2000);
+//        serial_send("M105");
+//        serial_receive();
+//        QThread::msleep(2000);
+//        serial_send("M105");
+//        serial_receive();
+//        QThread::msleep(2000);
+//        serial_send("M105");
+//        serial_receive();
+//        QThread::msleep(2000);
+//        serial_send("M105");
+//        serial_receive();
+
+//    }
 
     // Einlesen und parsen der G-Code Datei
     ifstream gcode_file;
@@ -120,6 +144,10 @@ int main(int argc, char *argv[])
     matplotlibcpp::save("/home/pi/Desktop/results.png");
     matplotlibcpp::show();
 
-    return a.exec();
+    while(!endcmd) {
+
+    }
+
+    return 0;
 }
 

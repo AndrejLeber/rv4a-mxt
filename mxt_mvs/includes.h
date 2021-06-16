@@ -34,6 +34,7 @@
 #include <QtSerialPort/QSerialPort>
 #include <QDebug>
 #include <QThread>
+#include <QTimer>
 
 // Eigene Headers
 #include "strdef.h"
@@ -44,6 +45,6 @@
 #include "matplotlibcpp.h"
 #include "GCode.h"
 #include "serial.h"
-#include <serial_receiver.h>
+#include "serial_receiver.h"
 
 #endif // INCLUDES_H

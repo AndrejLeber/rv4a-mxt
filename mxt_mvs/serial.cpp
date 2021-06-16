@@ -2,7 +2,6 @@
 #include "includes.h"
 
 extern QSerialPort *serial;
-extern QString serialBuffer;
 
 void init_serial(std::string port, int baudrate) {
 
@@ -20,6 +19,7 @@ int connect_serial() {
     bool connected = serial->open(QIODevice::ReadWrite);
     if (connected) {
         std::cout << "Successfully connected." << std::endl;
+        serial->flush();
         return 1;
     }
     else {
@@ -44,6 +44,20 @@ void serial_send(std::string msg) {
     msg += "\n";
     serial->write(msg.c_str());
     serial->flush();
+}
+
+void serial_receive() {
+    serialBuffer = "";
+
+    while (!serial->waitForBytesWritten(7)) {
+//        std::cout << "Hallo" << std::endl;
+        serialData = serial->readAll();
+        serialBuffer += QString::fromStdString(serialData.toStdString());
+        std::cout << serialBuffer.toStdString() << std::endl;
+        break;
+    }
+
+
 }
 
 void serial_heating_hotend (int temp) {
