@@ -181,6 +181,14 @@ void* mxt_mvs_pos(void* data)
 
     unsigned int i = 0;
     for (auto gcode = vec_gcode->begin(); gcode != vec_gcode->end(); gcode++, i++) {
+        if((gcode->command_id == "G28")) {
+
+        }
+        else {
+            serial_send(gcode->text);
+            serial_receive();
+        }
+
         if((gcode->command_id == "G01") || (gcode->command_id == "G1") ||
                 (gcode->command_id == "G00") || (gcode->command_id == "G0")){
             // Linear fahren
@@ -232,21 +240,21 @@ void* mxt_mvs_pos(void* data)
         else if((gcode->command_id == "G28")){
             // Homing
             POSE ziel;
-            if(gcode->homing_axes.find('X') != string::npos){
+            if(gcode->homing_axes.find('X') != std::string::npos){
                 // X-Achse homen
                 ziel.w.x = 0.0f;
             }
             else{
                 ziel.w.x = stuetzstellen.back().w.x;
             }
-            if(gcode->homing_axes.find('Y') != string::npos){
+            if(gcode->homing_axes.find('Y') != std::string::npos){
                 // Y-Achse homen
                 ziel.w.y = 0.0f;
             }
             else{
                 ziel.w.y = stuetzstellen.back().w.y;
             }
-            if(gcode->homing_axes.find('Z') != string::npos){
+            if(gcode->homing_axes.find('Z') != std::string::npos){
                 // Z-Achse homen
                 ziel.w.z = 0.0f;
             }

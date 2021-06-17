@@ -12,7 +12,7 @@
 #include "matplotlibcpp.h"
 #endif
 
-QSerialPort *serial;
+extern QSerialPort *serial;
 
 static long sock;
 int endcmd = 0;
@@ -42,41 +42,11 @@ int main()
     serial = new QSerialPort();
     init_serial("/dev/ttyACM0", 115200);
 
-//    if(connect_serial() == 1) {
-
-//        QThread::msleep(1000);
-//        serial_send("M105");
-//        serial_receive();
-//        QThread::msleep(2000);
-//        serial_send("M106 S255");
-//        serial_receive();
-//        QThread::msleep(2000);
-//        serial_send("M107");
-//        serial_receive();
-//        QThread::msleep(2000);
-//        serial_send("M105");
-//        serial_receive();
-//        QThread::msleep(2000);
-//        serial_send("M105");
-//        serial_receive();
-//        QThread::msleep(2000);
-//        serial_send("M105");
-//        serial_receive();
-//        QThread::msleep(2000);
-//        serial_send("M105");
-//        serial_receive();
-//        QThread::msleep(2000);
-//        serial_send("M105");
-//        serial_receive();
-//        QThread::msleep(2000);
-//        serial_send("M105");
-//        serial_receive();
-
-//    }
+    connect_serial();
 
     // Einlesen und parsen der G-Code Datei
-    ifstream gcode_file;
-    string filename;
+    std::ifstream gcode_file;
+    std::string filename;
     std::cout << "Please enter the full path and filename of the desired GCode- File: ";
     //std::cin >> filename;
     filename = "/home/pi/Desktop/test2.gcode";
@@ -86,8 +56,8 @@ int main()
         std::cout << "File could not be opened." << std::endl;
         return -1;
     }
-    vector<GCode> vec_gcode;
-    string line;
+    std::vector<GCode> vec_gcode;
+    std::string line;
 
     while(getline(gcode_file, line)){
         GCode gcode{};

@@ -10,7 +10,7 @@
 /*
  * Overload the output operator for poses
  */
-ostream& operator<<(ostream& os, const Point3D& point){
+std::ostream& operator<<(std::ostream& os, const Point3D& point){
     if(point.x.has_value()) {
         os << "X" << point.x.value();
     }
@@ -26,7 +26,7 @@ ostream& operator<<(ostream& os, const Point3D& point){
 /*
  * Overload the output operator to define how the command is printed
  */
-ostream& operator<<(ostream& os, const GCode& gcode){
+std::ostream& operator<<(std::ostream& os, const GCode& gcode){
     return os;
 }
 
@@ -53,7 +53,7 @@ bool GCode::is_home() const{
 /*
  * Overload the input operator to define how the command is read
  */
-istream& operator>>(istream& is, GCode& gcode){
+std::istream& operator>>(std::istream& is, GCode& gcode){
     std::getline(is, gcode.text);
 
     // Remove excess whitespace
@@ -71,9 +71,9 @@ istream& operator>>(istream& is, GCode& gcode){
 
     // Evaluate only non-empty strings and ignore comments
     if(!gcode.text.empty() && (gcode.text.at(0) != COMMENT_DESCRIPTOR)){
-        string word;
-        string command_number, line_number;
-        stringstream sstream(gcode.text);
+        std::string word;
+        std::string command_number, line_number;
+        std::stringstream sstream(gcode.text);
 
         // Get first argument
         std::getline(sstream, word, ' ');
@@ -152,7 +152,7 @@ istream& operator>>(istream& is, GCode& gcode){
             if(is_home){
                 // Search for descriptor in axes and add to axes to home
                 std::size_t pos = gcode.axes.find(descriptor);
-                if(pos != string::npos){
+                if(pos != std::string::npos){
                     gcode.homing_axes += descriptor;
                 }
             }

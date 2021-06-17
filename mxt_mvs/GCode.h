@@ -16,35 +16,33 @@
 #define CENTER_Y_DESCRIPTOR             ('J')
 #define CENTER_Z_DESCRIPTOR             ('K')
 
-using namespace std;
-
 class Point3D{
 public:
     std::optional<float> x{};
     std::optional<float> y{};
     std::optional<float> z{};
     Point3D()=default;
-    friend ostream& operator<<(ostream& os, const Point3D& point);
+    friend std::ostream& operator<<(std::ostream& os, const Point3D& point);
 };
 
 class GCode {
-    const string axes{"XYZ"};
+    const std::string axes{"XYZ"};
 public:
     std::optional<unsigned int> line_number{};
-    string command_id{};
+    std::string command_id{};
     std::optional<float> feedrate;
     std::optional<float> extrusion_len{};
-    string homing_axes{};
-    string text{};
-    struct Point3D pose{};
-    struct Point3D center{};
+    std::string homing_axes{};
+    std::string text{};
+    Point3D pose{};
+    Point3D center{};
     GCode()=default;
     bool can_extrude() const;
     bool can_mv_pose() const;
     bool is_home() const;
     bool is_circular() const;
-    friend ostream& operator<<(ostream& os, const GCode& gcode);
-    friend istream& operator>>(istream& is, GCode& gcode);
+    friend std::ostream& operator<<(std::ostream& os, const GCode& gcode);
+    friend std::istream& operator>>(std::istream& is, GCode& gcode);
 };
 
 #endif //RV4A_MXT_GCODE_H

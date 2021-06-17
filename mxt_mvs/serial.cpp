@@ -1,7 +1,8 @@
 #include "serial.h"
 #include "includes.h"
 
-extern QSerialPort *serial;
+QSerialPort *serial;
+bool Finished_serial_cmd;
 
 void init_serial(std::string port, int baudrate) {
 
@@ -18,8 +19,11 @@ void init_serial(std::string port, int baudrate) {
 int connect_serial() {
     bool connected = serial->open(QIODevice::ReadWrite);
     if (connected) {
-        std::cout << "Successfully connected." << std::endl;
+        std::cout << "Successfully connected to USB." << std::endl;
         serial->flush();
+
+        serial_send("M105");
+        serial_receive();
         return 1;
     }
     else {
@@ -40,31 +44,39 @@ void disconnect_serial() {
 
 }
 
-void serial_send(std::string msg) {
-    msg += "\n";
-    serial->write(msg.c_str());
-    serial->flush();
+void serial_send(const std::string &msg) {
+    std::string temp = msg + "\n";
+    std::cout << msg.c_str() << std::endl;
+    try {
+        serial->write(temp.c_str());
+        serial->flush();
+    } catch (std::exception e) {
+        std::cout << e.what() << std::endl;
+    }
 }
 
-void serial_receive() {
+bool serial_receive() {
     serialBuffer = "";
-
-    while (!serial->waitForBytesWritten(7)) {
-//        std::cout << "Hallo" << std::endl;
+    while (!serial->waitForBytesWritten(1)) {
         serialData = serial->readAll();
         serialBuffer += QString::fromStdString(serialData.toStdString());
-        std::cout << serialBuffer.toStdString() << std::endl;
-        break;
+        if (serialBuffer.toStdString().find("\n") != std::string::npos)
+        {
+           std::cout << serialBuffer.toStdString() << std::endl;
+           if (serialBuffer.toStdString().find("ok") != std::string::npos) {
+               return true;
+           }
+           serialBuffer = "";
+        }
     }
-
-
+    return false;
 }
 
 void serial_heating_hotend (int temp) {
     std::string msg = "M109 S";
-    msg += to_string(temp);
+    msg += std::to_string(temp);
     serial_send(msg);
-    std::cout << "Start heating hotend to " << to_string(temp) << " degrees ..." << std::endl;
+    std::cout << "Start heating hotend to " << std::to_string(temp) << " degrees ..." << std::endl;
     std::string recv_msg = serialBuffer.toStdString();
     while (!serialBuffer.contains("ok")) {
         std::cout << recv_msg << std::endl;
