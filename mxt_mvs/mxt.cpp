@@ -180,7 +180,7 @@ void* mxt_mvs_pos(void* data)
                  "; z = " << stuetzstellen.at(0).w.z << std::endl;
 
     unsigned int i = 0;
-    for (auto gcode = vec_gcode->begin(); gcode != vec_gcode->begin(); gcode++, i++) {
+    for (auto gcode = vec_gcode->begin(); gcode != vec_gcode->end(); gcode++, i++) {
         if((gcode->command_id == "G01") || (gcode->command_id == "G1") ||
                 (gcode->command_id == "G00") || (gcode->command_id == "G0")){
             // Linear fahren
