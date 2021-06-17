@@ -49,7 +49,7 @@ int main()
     std::string filename;
     std::cout << "Please enter the full path and filename of the desired GCode- File: ";
     //std::cin >> filename;
-    filename = "/home/pi/Desktop/test2.gcode";
+    filename = "/home/pi/Desktop/test.gcode";
     std::cout << filename << " will be used." << std::endl;
     gcode_file.open(filename);
     if(!gcode_file.is_open()){
@@ -61,7 +61,13 @@ int main()
 
     while(getline(gcode_file, line)){
         GCode gcode{};
-        static_cast<std::istringstream>(line) >> gcode;
+        try {
+            static_cast<std::istringstream>(line) >> gcode;
+        } catch (std::exception e) {
+            std::cout << "Parser exception: " << e.what() <<std::endl;
+            return -1;
+        }
+
         if (!gcode.command_id.empty()) {
             vec_gcode.push_back(gcode);
         }

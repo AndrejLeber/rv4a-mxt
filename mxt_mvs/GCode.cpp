@@ -56,18 +56,29 @@ bool GCode::is_home() const{
 std::istream& operator>>(std::istream& is, GCode& gcode){
     std::getline(is, gcode.text);
 
+    if(gcode.text.empty()) {
+    gcode.text = COMMENT_DESCRIPTOR;
+}
+
     // Remove excess whitespace
     std::size_t start, end;
     // Remove leading whitespace
     start = gcode.text.find_first_not_of(' ');
+    if (start == std::string::npos) {
+        gcode.text = COMMENT_DESCRIPTOR;
+        return is;
+    }
     // Remove trailing whitespace and checksum asterisk
     end = gcode.text.find_last_of('*');
     gcode.text = gcode.text.substr(start, end - start);
     end = gcode.text.find_last_not_of(' ');
+    if (end == std::string::npos) {
+        end = gcode.text.size()-1;
+    }
     gcode.text = gcode.text.substr(0, end + 1);
 
     // Convert all characters to uppercase
-    for (auto & c: gcode.text) c = (char)toupper(c);
+    for (auto & c: gcode.text) c = toupper(c);
 
     // Evaluate only non-empty strings and ignore comments
     if(!gcode.text.empty() && (gcode.text.at(0) != COMMENT_DESCRIPTOR)){
@@ -164,6 +175,9 @@ std::istream& operator>>(std::istream& is, GCode& gcode){
                 gcode.homing_axes = gcode.axes;
             }
         }
+    }
+    else {
+        gcode.text = COMMENT_DESCRIPTOR;
     }
     return is;
 }
