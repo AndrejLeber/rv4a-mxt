@@ -49,7 +49,7 @@ int main()
     std::string filename;
     std::cout << "Please enter the full path and filename of the desired GCode- File: ";
     //std::cin >> filename;
-    filename = "/home/pi/Desktop/test.gcode";
+    filename = "/home/pi/Desktop/GCode/krueppel.gcode";
     std::cout << filename << " will be used." << std::endl;
     gcode_file.open(filename);
     if(!gcode_file.is_open()){

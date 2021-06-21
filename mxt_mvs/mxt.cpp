@@ -16,6 +16,8 @@ STEPS recv_msgs;
 MXTCMD MXTsend;
 MXTCMD MXTrecv;
 
+static float a = 300.0f;
+
 // Erstellen und Aufrufen des UDP- Sockets
 void mxt_init() {
 
@@ -182,7 +184,6 @@ void* mxt_mvs_pos(void* data)
     unsigned int i = 0;
     for (auto gcode = vec_gcode->begin(); gcode != vec_gcode->end(); gcode++, i++) {
         if((gcode->command_id == "G28")) {
-
         }
         else {
             serial_send(gcode->text);
@@ -222,7 +223,7 @@ void* mxt_mvs_pos(void* data)
             start.w.x = stuetzstellen.at(stuetzstellen.size()-2).w.x;
             start.w.y = stuetzstellen.at(stuetzstellen.size()-2).w.y;
             start.w.z = stuetzstellen.at(stuetzstellen.size()-2).w.z;
-            moveit = move_sinoide(mxt_send, mxt_recv, start, &target_curr, v_stuetz.back(), 500.0f);
+            moveit = move_sinoide(mxt_send, mxt_recv, start, &target_curr, v_stuetz.back(), a);
 
             if (moveit) {
                 std::cout << "Befehl erfolgreich ausgeführt." << std::endl;
@@ -267,7 +268,7 @@ void* mxt_mvs_pos(void* data)
             start.w.x = stuetzstellen.at(stuetzstellen.size()-2).w.x;
             start.w.y = stuetzstellen.at(stuetzstellen.size()-2).w.y;
             start.w.z = stuetzstellen.at(stuetzstellen.size()-2).w.z;
-            move_sinoide(mxt_send, mxt_recv, start, &ziel, v_stuetz.back(), 500.0f);
+            move_sinoide(mxt_send, mxt_recv, start, &ziel, v_stuetz.back(), a);
         }
     }
     return nullptr;
@@ -412,9 +413,9 @@ int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, POSE* zie
         send_sinoide.dat.pos.w.y = path.y.at(i);
         send_sinoide.dat.pos.w.z = path.z.at(i);
 
-        printf("Gesendete Position: x=%f, y=%f, z=%f\n", static_cast<double>(send_sinoide.dat.pos.w.x),
-               static_cast<double>(send_sinoide.dat.pos.w.y),
-               static_cast<double>(send_sinoide.dat.pos.w.z));
+//        printf("Gesendete Position: x=%f, y=%f, z=%f\n", static_cast<double>(send_sinoide.dat.pos.w.x),
+//               static_cast<double>(send_sinoide.dat.pos.w.y),
+//               static_cast<double>(send_sinoide.dat.pos.w.z));
 
         auto t_start = std::chrono::steady_clock::now();
 
@@ -424,7 +425,7 @@ int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, POSE* zie
             printf("Could not send package, %ld bytes sent\n", slen);
         }
         else {
-            printf("%ld bytes succesfully sent\n",slen);
+            // printf("%ld bytes succesfully sent\n",slen);
         }
         ready = select(sock + 1 , &rxfds, nullptr, nullptr, &timeout);
         if(!ready) {
@@ -441,9 +442,9 @@ int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, POSE* zie
 
         double timestep = std::chrono::duration_cast<std::chrono::microseconds>(t_end-t_start).count()/1e6;
 
-        printf("Empfangene Position: x=%f, y=%f, z=%f\n", static_cast<double>(recv_sinoide.dat.pos.w.x),
-               static_cast<double>(recv_sinoide.dat.pos.w.y),
-               static_cast<double>(recv_sinoide.dat.pos.w.z));
+//        printf("Empfangene Position: x=%f, y=%f, z=%f\n", static_cast<double>(recv_sinoide.dat.pos.w.x),
+//               static_cast<double>(recv_sinoide.dat.pos.w.y),
+//               static_cast<double>(recv_sinoide.dat.pos.w.z));
 
         recv_msgs.x.push_back(recv_sinoide.dat.pos.w.x);
         recv_msgs.y.push_back(recv_sinoide.dat.pos.w.y);
@@ -451,10 +452,10 @@ int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, POSE* zie
 
         try {
             recv_msgs.t.push_back(recv_msgs.t.at(recv_msgs.t.size()-1)+static_cast<float>(timestep));
-            std::cout << "Zeitstempel: " << recv_msgs.t.at(recv_msgs.t.size()-1) << std::endl;
+            //std::cout << "Zeitstempel: " << recv_msgs.t.at(recv_msgs.t.size()-1) << std::endl;
         } catch (...) {
             recv_msgs.t.push_back(0.0f);
-            std::cout << "Zeitstempel: " << recv_msgs.t.at(0) << std::endl;
+            //std::cout << "Zeitstempel: " << recv_msgs.t.at(0) << std::endl;
         }
 
 
