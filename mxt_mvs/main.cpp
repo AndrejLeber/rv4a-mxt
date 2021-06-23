@@ -40,7 +40,7 @@ int main()
 
     // Initialisieren der seriellen Kommunikation mit der Heizplatine
     serial = new QSerialPort();
-    init_serial("/dev/ttyACM0", 115200);
+    init_serial("/dev/ttyACM0", 250000);
 
     connect_serial();
 
@@ -49,7 +49,7 @@ int main()
     std::string filename;
     std::cout << "Please enter the full path and filename of the desired GCode- File: ";
     //std::cin >> filename;
-    filename = "/home/pi/Desktop/GCode/krueppelV3.gcode";
+    filename = "/home/pi/Desktop/GCode/CFFFP_xyzCalibration_cube.gcode";
     std::cout << filename << " will be used." << std::endl;
     gcode_file.open(filename);
     if(!gcode_file.is_open()){

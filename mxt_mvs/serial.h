@@ -15,7 +15,7 @@ int connect_serial();
 
 void disconnect_serial();
 
-void serial_send(const std::string &msg);
+void serial_send(const std::string &msg, bool print_msg);
 
 bool serial_receive();
 

@@ -16,7 +16,7 @@ STEPS recv_msgs;
 MXTCMD MXTsend;
 MXTCMD MXTrecv;
 
-static float a = 200.0f;
+static float a = 300.0f;
 
 // Erstellen und Aufrufen des UDP- Sockets
 void mxt_init() {
@@ -175,20 +175,29 @@ void* mxt_mvs_pos(void* data)
     std::vector<POSE> stuetzstellen;
     std::vector<float> v_stuetz;
 
-
-
     stuetzstellen.push_back(start);
     std::cout << "Beginne bei Position: x = " << stuetzstellen.at(0).w.x << "; y = " << stuetzstellen.at(0).w.y <<
                  "; z = " << stuetzstellen.at(0).w.z << std::endl;
 
     unsigned int i = 0;
+
+    auto starttime = std::chrono::steady_clock::now();
+    auto starttime2 = std::chrono::steady_clock::now();
+
+    std::vector<double> exec_time_50;
+
     for (auto gcode = vec_gcode->begin(); gcode != vec_gcode->end(); gcode++, i++) {
-        if((gcode->command_id == "G28" || gcode->command_id == "G01") || (gcode->command_id == "G1")) {
-        // Wenn G01 oder G1, führe den Extrusionsbefehl erst aus, wenn die Bahn vollständig geplant wurde
-        // Siehe unten
+        if(gcode->command_id == "M106") {
+            starttime2 = std::chrono::steady_clock::now();
+        }
+
+        if((gcode->command_id == "G28" || gcode->command_id == "G01") || (gcode->command_id == "G1") ||
+                (gcode->command_id == "G00") || (gcode->command_id == "G0")) {
+            // Wenn G01 oder G1, führe den Extrusionsbefehl erst aus, wenn die Bahn vollständig geplant wurde
+            // Siehe unten
         }
         else {
-            serial_send(gcode->text);
+            serial_send(gcode->text, 1);
             serial_receive();
         }
 
@@ -214,8 +223,8 @@ void* mxt_mvs_pos(void* data)
             target_curr.w.z = gcode->pose.z.value_or(stuetzstellen.back().w.z);
             stuetzstellen.push_back(target_curr);
 
-            std::cout << "Aktueller Befehl Nr. " << i << ": " << gcode->text << std::endl;
-            std::cout << "Fahre zu Position "<< i+1 << ": x = " << stuetzstellen.back().w.x << "; y = " << stuetzstellen.back().w.y <<
+            std::cout << "Aktueller Befehl Nr. " << i << "/" << vec_gcode->size() << ": " << gcode->text << std::endl;
+            std::cout << "Fahre zu Position "<< i << ": x = " << stuetzstellen.back().w.x << "; y = " << stuetzstellen.back().w.y <<
                          "; z = " << stuetzstellen.back().w.z << std::endl;
 
             // Bewegung über Move_Sinoide-Funktion zu der (den) Zielposition(en)
@@ -225,23 +234,37 @@ void* mxt_mvs_pos(void* data)
             start.w.x = stuetzstellen.at(stuetzstellen.size()-2).w.x;
             start.w.y = stuetzstellen.at(stuetzstellen.size()-2).w.y;
             start.w.z = stuetzstellen.at(stuetzstellen.size()-2).w.z;
-            // auto t1 = std::chrono::steady_clock::now();
+            auto t1 = std::chrono::steady_clock::now();
             STEPS path = calc_sinoide(start, &target_curr, v_stuetz.back(), a);
-            // auto t2 = std::chrono::steady_clock::now();
-            // std::cout << "Zeit zum Berechnen der Bahn: " << std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count()/1e6 << "s." << std::endl;
-            serial_send(gcode->text);
-            serial_receive();
-            // auto t3 = std::chrono::steady_clock::now();
-            // std::cout << "Zeit zum Senden des Heizbefehls: " << std::chrono::duration_cast<std::chrono::microseconds>(t3-t2).count()/1e6 << "s." << std::endl;
-            // serial_receive();
-            // auto t4 = std::chrono::steady_clock::now();
-            // std::cout << "Zeit vom Senden des Heizbefehls zum Empfang von 'ok': " << std::chrono::duration_cast<std::chrono::microseconds>(t4-t3).count()/1e6 << "s." << std::endl;
+            auto t2 = std::chrono::steady_clock::now();
+            std::cout << "Berechnungsdauer Bahnplanung: " << std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count()/1e3 << "ms." << std::endl;
+            serial_send(gcode->text, 0);
+            auto t3 = std::chrono::steady_clock::now();
+
+            std::cout << "Zeitstempel 'Befehl an Heizplatine gesendet': " <<  std::fixed << std::chrono::duration_cast<std::chrono::microseconds>(t3.time_since_epoch()).count()/1e3 << "ms." << std::endl;
             moveit = move_sinoide(mxt_send, mxt_recv, start, path);
-            // auto t5 = std::chrono::steady_clock::now();
-            // std::cout << "Impulszeit des Roboter-Controllers : " << std::chrono::duration_cast<std::chrono::microseconds>(t5-t4).count()/1e6 << "s." << std::endl;
+            auto t4 = std::chrono::steady_clock::now();
+
+            double remaining_exec_time = 0.0;
+            exec_time_50.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(t4-t1).count());
+
+            std::cout << "Anzahl Elemente in Vector: " << exec_time_50.size() << std::endl;
+            if(i < 50) {
+                std::cout << "Restlaufzeit wird berechnet ..." << std::endl;
+            }
+
+            if (exec_time_50.size() == 50) {
+                for (double element : exec_time_50) {
+                     remaining_exec_time += static_cast<double>(vec_gcode->size()-i)/50.0*element;
+                }
+                std::cout << "Geschätzte Restlaufzeit: " << remaining_exec_time/1000.0 << "s." << std::endl;
+                remaining_exec_time = 0.0;
+                exec_time_50.erase(exec_time_50.begin());
+            }
 
             if (moveit) {
-                std::cout << "Befehl erfolgreich ausgeführt." << std::endl;
+                std::cout << "Roboterfahrbefehl erfolgreich ausgeführt." << std::endl;
+                std::cout << std::endl;
             }
 
         }
@@ -287,6 +310,11 @@ void* mxt_mvs_pos(void* data)
             move_sinoide(mxt_send, mxt_recv, start, path);
         }
     }
+
+    auto endtime = std::chrono::steady_clock::now();
+    std::cout << "Gesamtzeit inkl. Aufheizphase: " << std::chrono::duration_cast<std::chrono::microseconds>(endtime-starttime).count()/1e6 << "s." << std::endl;
+    std::cout << "Druckzeit (ab M106): " << std::chrono::duration_cast<std::chrono::microseconds>(endtime-starttime2).count()/1e6 << "s." << std::endl;
+
     return nullptr;
 }
 
@@ -433,9 +461,9 @@ int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, STEPS pat
         send_sinoide.dat.pos.w.y = path.y.at(i);
         send_sinoide.dat.pos.w.z = path.z.at(i);
 
-//        printf("Gesendete Position: x=%f, y=%f, z=%f\n", static_cast<double>(send_sinoide.dat.pos.w.x),
-//               static_cast<double>(send_sinoide.dat.pos.w.y),
-//               static_cast<double>(send_sinoide.dat.pos.w.z));
+        //        printf("Gesendete Position: x=%f, y=%f, z=%f\n", static_cast<double>(send_sinoide.dat.pos.w.x),
+        //               static_cast<double>(send_sinoide.dat.pos.w.y),
+        //               static_cast<double>(send_sinoide.dat.pos.w.z));
 
         auto t_start = std::chrono::steady_clock::now();
 
@@ -446,6 +474,10 @@ int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, STEPS pat
         }
         else {
             // printf("%ld bytes succesfully sent\n",slen);
+            if(i == 0) {
+                auto t5 = std::chrono::steady_clock::now();
+                std::cout << "Zeitstempel 'Befehl an Robotercontroller gesendet': " << std::fixed << std::chrono::duration_cast<std::chrono::microseconds>(t5.time_since_epoch()).count()/1e3 << "ms." << std::endl;
+            }
         }
         ready = select(sock + 1 , &rxfds, nullptr, nullptr, &timeout);
         if(!ready) {
@@ -462,9 +494,9 @@ int move_sinoide(MXTCMD send_sinoide, MXTCMD recv_sinoide, POSE start, STEPS pat
 
         double timestep = std::chrono::duration_cast<std::chrono::microseconds>(t_end-t_start).count()/1e6;
 
-//        printf("Empfangene Position: x=%f, y=%f, z=%f\n", static_cast<double>(recv_sinoide.dat.pos.w.x),
-//               static_cast<double>(recv_sinoide.dat.pos.w.y),
-//               static_cast<double>(recv_sinoide.dat.pos.w.z));
+        //        printf("Empfangene Position: x=%f, y=%f, z=%f\n", static_cast<double>(recv_sinoide.dat.pos.w.x),
+        //               static_cast<double>(recv_sinoide.dat.pos.w.y),
+        //               static_cast<double>(recv_sinoide.dat.pos.w.z));
 
         recv_msgs.x.push_back(recv_sinoide.dat.pos.w.x);
         recv_msgs.y.push_back(recv_sinoide.dat.pos.w.y);

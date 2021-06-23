@@ -22,7 +22,7 @@ int connect_serial() {
         std::cout << "Successfully connected to USB." << std::endl;
         serial->flush();
 
-        serial_send("M105");
+        serial_send("M105", 1);
         serial_receive();
         return 1;
     }
@@ -44,9 +44,11 @@ void disconnect_serial() {
 
 }
 
-void serial_send(const std::string &msg) {
+void serial_send(const std::string &msg, bool print_msg) {
     std::string temp = msg + "\n";
-    std::cout << msg.c_str() << std::endl;
+    if (print_msg == 1) {
+        std::cout << msg.c_str() << std::endl;
+    }
     try {
         serial->write(temp.c_str());
         serial->flush();
@@ -75,7 +77,7 @@ bool serial_receive() {
 void serial_heating_hotend (int temp) {
     std::string msg = "M109 S";
     msg += std::to_string(temp);
-    serial_send(msg);
+    serial_send(msg, 1);
     std::cout << "Start heating hotend to " << std::to_string(temp) << " degrees ..." << std::endl;
     std::string recv_msg = serialBuffer.toStdString();
     while (!serialBuffer.contains("ok")) {
