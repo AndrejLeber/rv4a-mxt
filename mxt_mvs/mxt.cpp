@@ -16,7 +16,7 @@ STEPS recv_msgs;
 MXTCMD MXTsend;
 MXTCMD MXTrecv;
 
-static float a = 300.0f;
+static float a = 500.0f;
 
 // Erstellen und Aufrufen des UDP- Sockets
 void mxt_init() {
@@ -248,14 +248,14 @@ void* mxt_mvs_pos(void* data)
             double remaining_exec_time = 0.0;
             exec_time_50.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(t4-t1).count());
 
-            std::cout << "Anzahl Elemente in Vector: " << exec_time_50.size() << std::endl;
-            if(i < 50) {
+            //std::cout << "Anzahl Elemente in Vector: " << exec_time_50.size() << std::endl;
+            if(i < vec_gcode->size()/20) {
                 std::cout << "Restlaufzeit wird berechnet ..." << std::endl;
             }
 
-            if (exec_time_50.size() == 50) {
+            if (exec_time_50.size() == vec_gcode->size()/20) {
                 for (double element : exec_time_50) {
-                     remaining_exec_time += static_cast<double>(vec_gcode->size()-i)/50.0*element;
+                     remaining_exec_time += static_cast<double>(vec_gcode->size()-i)/(vec_gcode->size()/20)*element;
                 }
                 std::cout << "Geschätzte Restlaufzeit: " << remaining_exec_time/1000.0 << "s." << std::endl;
                 remaining_exec_time = 0.0;
