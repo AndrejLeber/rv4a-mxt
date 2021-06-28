@@ -49,7 +49,7 @@ int main()
     std::string filename;
     std::cout << "Please enter the full path and filename of the desired GCode- File: ";
     //std::cin >> filename;
-    filename = "/home/pi/Desktop/GCode/xyz_calibration_cube_4mm_nozzle.gcode";
+    filename = "/home/pi/Desktop/GCode/CFFFP_xyzCalibration_cube_0.8mm_nozzle.gcode";
     std::cout << filename << " will be used." << std::endl;
     gcode_file.open(filename);
     if(!gcode_file.is_open()){

@@ -218,10 +218,32 @@ void* mxt_mvs_pos(void* data)
             }
 
             v_stuetz.push_back(v_curr);
+
             target_curr.w.x = gcode->pose.x.value_or(stuetzstellen.back().w.x);
             target_curr.w.y = gcode->pose.y.value_or(stuetzstellen.back().w.y);
             target_curr.w.z = gcode->pose.z.value_or(stuetzstellen.back().w.z);
-            stuetzstellen.push_back(target_curr);
+
+            if(abs(target_curr.w.x - stuetzstellen.back().w.x) < 1e-6f &&
+               abs(target_curr.w.y - stuetzstellen.back().w.y) < 1e-6f &&
+               abs(target_curr.w.z - stuetzstellen.back().w.z) < 1e-6f){
+
+                if(gcode->extrusion_len.has_value()){
+                    // Keine Fahrtbewegung, aber Extrusion
+                    // Synchronisierung mit Druckplatine über M400
+                    serial_send(gcode->text, 1);
+                    serial_receive();
+                    std::string s{"M400"};
+                    serial_send(s, 1);
+                    serial_receive();
+                    continue;
+                }
+                else{
+                    continue;
+                }
+            }
+            else{
+                stuetzstellen.push_back(target_curr);
+            }
 
             std::cout << "Aktueller Befehl Nr. " << i << "/" << vec_gcode->size() << ": " << gcode->text << std::endl;
             std::cout << "Fahre zu Position "<< i << ": x = " << stuetzstellen.back().w.x << "; y = " << stuetzstellen.back().w.y <<
